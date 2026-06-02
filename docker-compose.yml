@@ -2,8 +2,8 @@ services:
   mongodb:
     image: mongo:8
     container_name: larchitecte-mongodb
-    ports:
-      - "27017:27017"
+    #ports:
+     # - "27017:27017"
     volumes:
       - mongo-data:/data/db
     restart: unless-stopped
