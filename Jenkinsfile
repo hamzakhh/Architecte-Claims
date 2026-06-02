@@ -42,7 +42,7 @@ pipeline {
         stage('Tests Angular') {
             steps {
                 dir("${FRONTEND_DIR}") {
-                    sh 'npm ci'
+                    sh 'npm install'
                     sh 'npm run test -- --watch=false --browsers=ChromeHeadless --no-progress'
                 }
             }
