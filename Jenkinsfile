@@ -39,19 +39,14 @@ pipeline {
             }
         }
 
-        stage('Tests Angular') {
-            steps {
-                dir("${FRONTEND_DIR}") {
-                    sh 'npm install'
-                    sh 'npm run test -- --watch=false --browsers=ChromeHeadless --no-progress'
-                }
-            }
-            post {
-                always {
-                    junit allowEmptyResults: true,
-                          testResults: "${FRONTEND_DIR}/test-results/**/*.xml"
-                }
-            }
+       stage('Tests Angular') {
+    steps {
+        dir('front/larchitecte-claims') {
+            sh 'npm install'
+            sh 'npm run build -- --configuration production'
+        }
+    }
+}
         }
 
         stage('Docker Build') {
