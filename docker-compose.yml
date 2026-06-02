@@ -1,5 +1,4 @@
 services:
-  # ---- MongoDB ----
   mongodb:
     image: mongo:8
     container_name: larchitecte-mongodb
@@ -9,11 +8,11 @@ services:
       - mongo-data:/data/db
     restart: unless-stopped
 
-  # ---- Backend (Spring Boot) ----
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    image: hamzaaaaaa/larchitecte-backend:latest
     container_name: larchitecte-backend
     ports:
       - "8081:8080"
@@ -27,11 +26,11 @@ services:
       - mongodb
     restart: unless-stopped
 
-  # ---- Frontend (Angular + Nginx) ----
   frontend:
     build:
       context: ./front/larchitecte-claims
       dockerfile: Dockerfile
+    image: hamzaaaaaa/larchitecte-frontend:latest
     container_name: larchitecte-frontend
     ports:
       - "80:80"
