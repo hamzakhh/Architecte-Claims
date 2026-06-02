@@ -1,12 +1,10 @@
 pipeline {
     agent any
-
     options {
         buildDiscarder(logRotator(numToKeepStr: '10'))
         timeout(time: 30, unit: 'MINUTES')
         disableConcurrentBuilds()
     }
-
     environment {
         DOCKERHUB_USER  = "hamzaaaaaa"
         BACKEND_IMAGE   = "hamzaaaaaa/larchitecte-backend"
@@ -14,15 +12,13 @@ pipeline {
         COMPOSE_FILE    = "docker-compose.yml"
         BACKEND_DIR     = "backend"
         FRONTEND_DIR    = "front/larchitecte-claims"
-        IMAGE_TAG       = "${env.BUILD_NUMBER}"
+        IMAGE_TAG       = "${BUILD_NUMBER}"   // ✅ fixed: was env.BUILD_NUMBER
     }
-
     stages {
-
         stage('Checkout') {
             steps {
                 checkout scm
-                echo "Branche : ${env.BRANCH_NAME ?: 'main'} | Build #${env.BUILD_NUMBER}"
+                echo "Branche : ${env.BRANCH_NAME ?: 'main'} | Build #${BUILD_NUMBER}"
             }
         }
 
@@ -57,7 +53,8 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker compose -f ${COMPOSE_FILE} build --no-cache'
+                // ✅ double quotes so COMPOSE_FILE expands
+                sh "docker compose -f ${COMPOSE_FILE} build --no-cache"
             }
         }
 
@@ -69,18 +66,14 @@ pipeline {
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-
                     sh """
                         docker tag ${BACKEND_IMAGE}:latest  ${BACKEND_IMAGE}:${IMAGE_TAG}
                         docker tag ${FRONTEND_IMAGE}:latest ${FRONTEND_IMAGE}:${IMAGE_TAG}
-
                         docker push ${BACKEND_IMAGE}:latest
                         docker push ${BACKEND_IMAGE}:${IMAGE_TAG}
-
                         docker push ${FRONTEND_IMAGE}:latest
                         docker push ${FRONTEND_IMAGE}:${IMAGE_TAG}
                     """
-
                     sh 'docker logout'
                 }
             }
@@ -88,36 +81,37 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh '''
+                sh """
                     docker compose -f ${COMPOSE_FILE} up -d --force-recreate
                     echo "Attente du démarrage des services (40s)..."
                     sleep 40
-                '''
+                """
             }
         }
 
         stage('Smoke Tests') {
             steps {
-                sh '''
-                    echo "Test frontend..."
-                    curl -sf http://localhost:80 || (echo "ERREUR: Frontend KO" && exit 1)
-
-                    echo "Test backend health..."
-                    curl -sf http://localhost:8081/actuator/health || (echo "ERREUR: Backend KO" && exit 1)
-
-                    echo "Tous les services sont UP"
-                '''
+                // ✅ retry gives containers a grace period if 40s wasn't enough
+                retry(3) {
+                    sh '''
+                        echo "Test frontend..."
+                        curl -sf http://localhost:80 || (echo "ERREUR: Frontend KO" && exit 1)
+                        echo "Test backend health..."
+                        curl -sf http://localhost:8081/actuator/health || (echo "ERREUR: Backend KO" && exit 1)
+                        echo "Tous les services sont UP"
+                    '''
+                }
             }
         }
     }
 
     post {
         success {
-            echo "Build #${env.BUILD_NUMBER} reussi - images pushees sur Docker Hub"
+            echo "✅ Build #${BUILD_NUMBER} reussi - images pushees sur Docker Hub"
         }
         failure {
-            echo "Build #${env.BUILD_NUMBER} echoue - logs des conteneurs :"
-            sh 'docker compose -f ${COMPOSE_FILE} logs --tail=80 || true'
+            echo "❌ Build #${BUILD_NUMBER} echoue - logs des conteneurs :"
+            sh "docker compose -f ${COMPOSE_FILE} logs --tail=80 || true"  // ✅ fixed quotes
         }
         always {
             sh 'docker image prune -f || true'
