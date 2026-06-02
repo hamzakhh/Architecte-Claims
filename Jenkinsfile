@@ -12,13 +12,16 @@ pipeline {
         COMPOSE_FILE    = "docker-compose.yml"
         BACKEND_DIR     = "backend"
         FRONTEND_DIR    = "front/larchitecte-claims"
-        IMAGE_TAG       = "${BUILD_NUMBER}"   // ✅ fixed: was env.BUILD_NUMBER
+        IMAGE_TAG       = "${BUILD_NUMBER}"
     }
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
-                echo "Branche : ${env.BRANCH_NAME ?: 'main'} | Build #${BUILD_NUMBER}"
+                // ✅ Direct clone — no SCMFileSystem, no Lightweight checkout bug
+                git branch: 'main',
+                    credentialsId: 'github-credentials', // remove this line if repo is public
+                    url: 'https://github.com/hamzakhh/Architecte-Claims.git'
+                echo "Build #${BUILD_NUMBER}"
             }
         }
 
@@ -53,7 +56,6 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                // ✅ double quotes so COMPOSE_FILE expands
                 sh "docker compose -f ${COMPOSE_FILE} build --no-cache"
             }
         }
@@ -91,12 +93,9 @@ pipeline {
 
         stage('Smoke Tests') {
             steps {
-                // ✅ retry gives containers a grace period if 40s wasn't enough
                 retry(3) {
                     sh '''
-                        echo "Test frontend..."
-                        curl -sf http://localhost:80 || (echo "ERREUR: Frontend KO" && exit 1)
-                        echo "Test backend health..."
+                        curl -sf http://localhost:80   || (echo "ERREUR: Frontend KO"  && exit 1)
                         curl -sf http://localhost:8081/actuator/health || (echo "ERREUR: Backend KO" && exit 1)
                         echo "Tous les services sont UP"
                     '''
@@ -111,7 +110,7 @@ pipeline {
         }
         failure {
             echo "❌ Build #${BUILD_NUMBER} echoue - logs des conteneurs :"
-            sh "docker compose -f ${COMPOSE_FILE} logs --tail=80 || true"  // ✅ fixed quotes
+            sh "docker compose -f ${COMPOSE_FILE} logs --tail=80 || true"
         }
         always {
             sh 'docker image prune -f || true'
