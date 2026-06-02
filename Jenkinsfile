@@ -1,77 +1,126 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    COMPOSE_FILE = "docker-compose.yml"
-    PROJECT_NAME = "larchitecte"
-  }
-
-  stages {
-
-    stage('Checkout') {
-      steps { checkout scm }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
     }
 
-    stage('Tests unitaires – Java') {
-      steps {
-        dir('backend') {
-          sh 'mvn test -B'
+    environment {
+        DOCKERHUB_USER  = "hamzaaaaaa"
+        BACKEND_IMAGE   = "hamzaaaaaa/larchitecte-backend"
+        FRONTEND_IMAGE  = "hamzaaaaaa/larchitecte-frontend"
+        COMPOSE_FILE    = "docker-compose.yml"
+        BACKEND_DIR     = "backend"
+        FRONTEND_DIR    = "front/larchitecte-claims"
+        IMAGE_TAG       = "${env.BUILD_NUMBER}"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo "Branche : ${env.BRANCH_NAME ?: 'main'} | Build #${env.BUILD_NUMBER}"
+            }
         }
-      }
-      post {
+
+        stage('Tests Java') {
+            steps {
+                dir("${BACKEND_DIR}") {
+                    sh 'mvn test -B'
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true,
+                          testResults: "${BACKEND_DIR}/target/surefire-reports/**/*.xml"
+                }
+            }
+        }
+
+        stage('Tests Angular') {
+            steps {
+                dir("${FRONTEND_DIR}") {
+                    sh 'npm ci'
+                    sh 'npm run test -- --watch=false --browsers=ChromeHeadless --no-progress'
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true,
+                          testResults: "${FRONTEND_DIR}/test-results/**/*.xml"
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh 'docker compose -f ${COMPOSE_FILE} build --no-cache'
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+
+                    sh """
+                        docker tag ${BACKEND_IMAGE}:latest  ${BACKEND_IMAGE}:${IMAGE_TAG}
+                        docker tag ${FRONTEND_IMAGE}:latest ${FRONTEND_IMAGE}:${IMAGE_TAG}
+
+                        docker push ${BACKEND_IMAGE}:latest
+                        docker push ${BACKEND_IMAGE}:${IMAGE_TAG}
+
+                        docker push ${FRONTEND_IMAGE}:latest
+                        docker push ${FRONTEND_IMAGE}:${IMAGE_TAG}
+                    """
+
+                    sh 'docker logout'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh '''
+                    docker compose -f ${COMPOSE_FILE} up -d --force-recreate
+                    echo "Attente du démarrage des services (40s)..."
+                    sleep 40
+                '''
+            }
+        }
+
+        stage('Smoke Tests') {
+            steps {
+                sh '''
+                    echo "Test frontend..."
+                    curl -sf http://localhost:80 || (echo "ERREUR: Frontend KO" && exit 1)
+
+                    echo "Test backend health..."
+                    curl -sf http://localhost:8081/actuator/health || (echo "ERREUR: Backend KO" && exit 1)
+
+                    echo "Tous les services sont UP"
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Build #${env.BUILD_NUMBER} reussi - images pushees sur Docker Hub"
+        }
+        failure {
+            echo "Build #${env.BUILD_NUMBER} echoue - logs des conteneurs :"
+            sh 'docker compose -f ${COMPOSE_FILE} logs --tail=80 || true'
+        }
         always {
-          junit 'backend/target/surefire-reports/**/*.xml'
+            sh 'docker image prune -f || true'
         }
-      }
     }
-
-    stage('Tests unitaires – Angular') {
-      steps {
-        dir('front/larchitecte-claims') {
-          sh 'npm ci'
-          sh 'npm run test -- --watch=false --browsers=ChromeHeadless'
-        }
-      }
-      post {
-        always {
-          junit 'front/larchitecte-claims/test-results/**/*.xml'
-        }
-      }
-    }
-
-    stage('Docker Build') {
-      steps {
-        sh 'docker compose -f ${COMPOSE_FILE} build --no-cache'
-      }
-    }
-
-    stage('Deploy') {
-      when { branch 'main' }
-      steps {
-        sh '''
-          docker compose -f ${COMPOSE_FILE} up -d --force-recreate
-          # Attendre que les healthchecks passent
-          sleep 30
-          docker compose -f ${COMPOSE_FILE} ps
-        '''
-      }
-    }
-
-    stage('Smoke test') {
-      when { branch 'main' }
-      steps {
-        sh 'curl -f http://localhost/index.html || exit 1'
-        sh 'curl -f http://localhost:8081/actuator/health || exit 1'
-      }
-    }
-  }
-
-  post {
-    failure {
-      sh 'docker compose -f ${COMPOSE_FILE} logs --tail=50 || true'
-    }
-    always {
-      sh 'docker system prune -f || true'
-    }
-  }
 }
