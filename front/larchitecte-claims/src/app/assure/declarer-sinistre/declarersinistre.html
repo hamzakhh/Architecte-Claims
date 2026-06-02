@@ -1,0 +1,403 @@
+﻿<div class="max-w-4xl mx-auto">
+  <!-- Header -->
+  <div class="mb-10">
+    <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Déclaration de Sinistre</h1>
+    <p class="text-on-surface-variant mt-1">AssurancePro — Suivez les étapes pour déclarer votre sinistre</p>
+  </div>
+
+  <!-- Success State -->
+  <div *ngIf="submitSuccess()" class="bg-surface-container-lowest rounded-xl p-8 shadow-sm text-center">
+    <span class="material-symbols-outlined text-6xl text-green-600">check_circle</span>
+    <h2 class="text-xl font-semibold text-primary mt-4">Déclaration soumise avec succès !</h2>
+    <p class="text-on-surface-variant mt-2">Votre déclaration de sinistre a été enregistrée. Vous recevrez une confirmation sous peu.</p>
+    <div class="flex justify-center gap-4 mt-6">
+      <button (click)="goToMesSinistres()" class="btn-primary px-6 py-3 rounded-lg font-semibold text-sm">
+        Voir mes sinistres
+      </button>
+      <button (click)="newClaim()" class="btn-secondary px-6 py-3 rounded-lg font-semibold text-sm">
+        Nouvelle déclaration
+      </button>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <ng-container *ngIf="!submitSuccess()">
+    <!-- Progress Steps -->
+    <div class="flex items-center justify-between mb-8">
+      <div class="flex items-center flex-1">
+        <div class="flex items-center">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm"
+               [ngClass]="currentStep() >= 1 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'">1</div>
+          <div class="ml-3">
+            <div class="text-sm font-medium"
+                 [ngClass]="currentStep() >= 1 ? 'text-primary' : 'text-gray-500'">Informations</div>
+          </div>
+        </div>
+        <div class="flex-1 h-1 mx-4"
+             [ngClass]="currentStep() > 1 ? 'bg-primary' : 'bg-gray-300'"></div>
+      </div>
+
+      <div class="flex items-center flex-1">
+        <div class="flex items-center">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm"
+               [ngClass]="currentStep() >= 2 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'">2</div>
+          <div class="ml-3">
+            <div class="text-sm font-medium"
+                 [ngClass]="currentStep() >= 2 ? 'text-primary' : 'text-gray-500'">Documents</div>
+          </div>
+        </div>
+        <div class="flex-1 h-1 mx-4"
+             [ngClass]="currentStep() > 2 ? 'bg-primary' : 'bg-gray-300'"></div>
+      </div>
+
+      <div class="flex items-center flex-1">
+        <div class="flex items-center">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm"
+               [ngClass]="currentStep() >= 3 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'">3</div>
+          <div class="ml-3">
+            <div class="text-sm font-medium"
+                 [ngClass]="currentStep() >= 3 ? 'text-primary' : 'text-gray-500'">Localisation</div>
+          </div>
+        </div>
+        <div class="flex-1 h-1 mx-4"
+             [ngClass]="currentStep() > 3 ? 'bg-primary' : 'bg-gray-300'"></div>
+      </div>
+
+      <div class="flex items-center">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm"
+             [ngClass]="currentStep() >= 4 ? 'bg-primary text-white' : 'bg-gray-300 text-gray-600'">4</div>
+        <div class="ml-3">
+          <div class="text-sm font-medium"
+               [ngClass]="currentStep() >= 4 ? 'text-primary' : 'text-gray-500'">Confirmation</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div *ngIf="submitError()" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+      {{ submitError() }}
+    </div>
+
+    <!-- Form Container -->
+    <form [formGroup]="claimForm" class="bg-surface-container-lowest rounded-xl p-8 shadow-sm">
+
+      <!-- Step 1: Informations sur le Sinistre -->
+      <div *ngIf="currentStep() === 1" class="space-y-6">
+        <h2 class="text-xl font-semibold text-primary mb-6">Étape 1 : Informations sur le sinistre</h2>
+
+        <div class="space-y-1.5">
+          <label class="block text-sm font-medium text-on-surface">Type de sinistre *</label>
+          <select formControlName="type" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface text-sm"
+                  [ngClass]="{'border-red-500': claimForm.get('type')?.invalid && claimForm.get('type')?.touched}">
+            <option value="">Sélectionnez le type de sinistre</option>
+            <option value="water">Dégât des Eaux</option>
+            <option value="fire">Incendie</option>
+            <option value="theft">Vol avec Effraction</option>
+            <option value="auto">Sinistre Auto</option>
+            <option value="natural">Catastrophe naturelle</option>
+          </select>
+          <p *ngIf="claimForm.get('type')?.invalid && claimForm.get('type')?.touched" class="text-red-500 text-xs mt-1">
+            Le type de sinistre est obligatoire
+          </p>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block text-sm font-medium text-on-surface">Description détaillée *</label>
+          <textarea formControlName="description" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface placeholder:text-outline text-sm h-32 resize-none"
+                    placeholder="Veuillez décrire l'incident en détail..."
+                    [ngClass]="{'border-red-500': claimForm.get('description')?.invalid && claimForm.get('description')?.touched}"></textarea>
+          <p *ngIf="claimForm.get('description')?.invalid && claimForm.get('description')?.touched" class="text-red-500 text-xs mt-1">
+            La description est obligatoire (minimum 10 caractères)
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-on-surface">Date du sinistre *</label>
+            <input formControlName="dateSinistre" type="date" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface text-sm"
+                   [ngClass]="{'border-red-500': claimForm.get('dateSinistre')?.invalid && claimForm.get('dateSinistre')?.touched}">
+            <p *ngIf="claimForm.get('dateSinistre')?.invalid && claimForm.get('dateSinistre')?.touched" class="text-red-500 text-xs mt-1">
+              La date du sinistre est obligatoire
+            </p>
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-on-surface">Heure du sinistre *</label>
+            <input formControlName="heureSinistre" type="time" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface text-sm"
+                   [ngClass]="{'border-red-500': claimForm.get('heureSinistre')?.invalid && claimForm.get('heureSinistre')?.touched}">
+            <p *ngIf="claimForm.get('heureSinistre')?.invalid && claimForm.get('heureSinistre')?.touched" class="text-red-500 text-xs mt-1">
+              L'heure du sinistre est obligatoire
+            </p>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block text-sm font-medium text-on-surface">Estimation des dégâts</label>
+          <input formControlName="estimation" type="text" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface text-sm"
+                 placeholder="Ex : 5000 DT">
+        </div>
+
+        <div class="flex justify-end">
+          <button type="button" (click)="nextStep()" class="btn-primary px-6 py-3 rounded-lg font-semibold text-sm">
+            Suivant
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Documents -->
+      <div *ngIf="currentStep() === 2" class="space-y-6">
+        <h2 class="text-xl font-semibold text-primary mb-6">Étape 2 : Documents joints *</h2>
+
+        <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p class="text-sm text-blue-700">
+            <span class="material-symbols-outlined text-sm align-middle">info</span>
+            Au moins un document justificatif est obligatoire (photo, facture, etc.)
+          </p>
+        </div>
+
+        <!-- Drop Zone -->
+        <div class="drop-zone border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200"
+             [ngClass]="isDragOver() ? 'drop-zone--active' : 'border-outline-variant/50'"
+             (click)="fileInput.click()"
+             (dragover)="onDragOver($event)"
+             (dragleave)="onDragLeave($event)"
+             (drop)="onDrop($event)">
+          <span class="material-symbols-outlined text-4xl transition-colors duration-200"
+                [ngClass]="isDragOver() ? 'text-primary' : 'text-on-surface-variant'">cloud_upload</span>
+          <p class="text-sm font-medium mt-2"
+             [ngClass]="isDragOver() ? 'text-primary' : 'text-primary'">
+            {{ isDragOver() ? 'Déposez vos fichiers ici' : 'Glissez-déposez vos fichiers ici' }}
+          </p>
+          <p class="text-xs text-on-surface-variant mt-1">ou cliquez pour parcourir</p>
+          <div class="flex items-center justify-center gap-4 mt-3 text-xs text-on-surface-variant">
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">photo_size_select_actual</span>JPG, PNG, PDF</span>
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">data_usage</span>Max 10 Mo/fichier</span>
+          </div>
+          <input #fileInput type="file" multiple accept=".jpg,.jpeg,.png,.pdf" class="hidden" (change)="handleFileSelect($event)">
+        </div>
+
+        <!-- File List -->
+        <div *ngIf="uploadedFiles().length > 0" class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-medium text-on-surface">
+              Fichiers ajoutés
+              <span class="text-on-surface-variant font-normal">({{ validFileCount() }}/{{ uploadedFiles().length }})</span>
+            </h3>
+            <span *ngIf="uploadingCount() > 0" class="text-xs text-blue-600 flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs animate-spin">progress_activity</span>
+              {{ uploadingCount() }} en cours
+            </span>
+          </div>
+
+          @for (file of uploadedFiles(); track file.originalName + '_' + file.size; let i = $index) {
+            <div class="file-card flex items-start gap-3 p-3 bg-surface-container-low rounded-lg border transition-all duration-200"
+                 [ngClass]="file.error ? 'border-red-200' : file.completed ? 'border-emerald-200' : 'border-transparent'">
+
+              <!-- Thumbnail / Icon -->
+              <div class="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center"
+                   [ngClass]="file.previewUrl ? '' : file.error ? 'bg-red-50' : file.completed ? 'bg-emerald-50' : 'bg-blue-50'">
+                @if (file.previewUrl) {
+                  <img [src]="file.previewUrl" [alt]="file.originalName" class="w-full h-full object-cover">
+                } @else {
+                  <span class="material-symbols-outlined text-lg"
+                        [ngClass]="file.error ? 'text-red-500' : file.completed ? 'text-emerald-600' : 'text-blue-500'">
+                    {{ getFileIcon(file) }}
+                  </span>
+                }
+              </div>
+
+              <!-- File Info + Progress -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-medium text-on-surface truncate pr-2">{{ file.originalName }}</p>
+                  <span class="text-xs text-on-surface-variant flex-shrink-0">{{ formatFileSize(file.size) }}</span>
+                </div>
+
+                <!-- Progress Bar -->
+                @if (file.uploading) {
+                  <div class="mt-1.5">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-[11px] text-blue-600">Upload en cours...</span>
+                      <span class="text-[11px] text-blue-600 font-medium">{{ file.progress }}%</span>
+                    </div>
+                    <div class="w-full bg-blue-100 rounded-full h-1.5 overflow-hidden">
+                      <div class="upload-progress-bar h-full bg-blue-500 rounded-full transition-all duration-300 ease-out"
+                           [style.width.%]="file.progress"></div>
+                    </div>
+                  </div>
+                } @else if (file.error) {
+                  <div class="mt-1 flex items-center gap-2">
+                    <span class="text-[11px] text-red-600">{{ file.error }}</span>
+                    <button (click)="retryUpload(i)" class="retry-btn flex items-center gap-0.5 text-[11px] text-blue-600 hover:text-blue-800 font-medium">
+                      <span class="material-symbols-outlined text-xs">refresh</span>Réessayer
+                    </button>
+                  </div>
+                } @else if (file.completed) {
+                  <div class="mt-1 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs text-emerald-600">check_circle</span>
+                    <span class="text-[11px] text-emerald-600">Uploadé avec succès</span>
+                  </div>
+                }
+              </div>
+
+              <!-- Remove Button -->
+              <button (click)="removeFile(i)" class="flex-shrink-0 p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-all"
+                      [attr.title]="'Supprimer ' + file.originalName">
+                <span class="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="flex justify-between">
+          <button type="button" (click)="previousStep()" class="btn-secondary px-6 py-3 rounded-lg font-semibold text-sm">
+            Retour
+          </button>
+          <button type="button" (click)="nextStep()" class="btn-primary px-6 py-3 rounded-lg font-semibold text-sm">
+            Continuer
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Localisation -->
+      <div *ngIf="currentStep() === 3" class="space-y-6">
+        <h2 class="text-xl font-semibold text-primary mb-6">Étape 3 : Localisation du sinistre *</h2>
+
+        <div class="flex gap-2">
+          <input formControlName="lieu" type="text" placeholder="Adresse du lieu du sinistre *" class="flex-1 px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface text-sm"
+                 [ngClass]="{'border-red-500': claimForm.get('lieu')?.invalid && claimForm.get('lieu')?.touched}">
+          <button type="button" (click)="searchLocation()" class="btn-primary px-4 py-3 rounded-lg font-semibold text-sm">
+            <span class="material-symbols-outlined">search</span>
+          </button>
+        </div>
+        <p *ngIf="claimForm.get('lieu')?.invalid && claimForm.get('lieu')?.touched" class="text-red-500 text-xs mt-1">
+          Le lieu du sinistre est obligatoire
+        </p>
+
+        <div class="flex items-center gap-3">
+          <label class="flex items-center cursor-pointer">
+            <input type="checkbox" class="mr-2" [checked]="autoDetectEnabled()" (change)="toggleAutoDetect()">
+            <span class="text-sm text-on-surface">Détection automatique de la localisation</span>
+          </label>
+        </div>
+
+        <div class="bg-gray-100 rounded-lg h-64 relative overflow-hidden">
+          <div #map id="map" class="w-full h-full"></div>
+          <div *ngIf="!map" class="absolute inset-0 flex items-center justify-center bg-gray-100">
+            <div class="text-center">
+              <span class="material-symbols-outlined text-4xl text-on-surface-variant animate-pulse">map</span>
+              <p class="text-sm text-on-surface-variant mt-2">Chargement de la carte...</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block text-sm font-medium text-on-surface">Notes supplémentaires sur le lieu</label>
+          <textarea formControlName="notesLieu" class="w-full px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface placeholder:text-outline text-sm h-24 resize-none"
+                    placeholder="Informations complémentaires sur le lieu..."></textarea>
+        </div>
+
+        <div class="flex justify-between">
+          <button type="button" (click)="previousStep()" class="btn-secondary px-6 py-3 rounded-lg font-semibold text-sm">
+            Retour
+          </button>
+          <button type="button" (click)="nextStep()" class="btn-primary px-6 py-3 rounded-lg font-semibold text-sm">
+            Continuer vers la confirmation
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 4: Récapitulatif et soumission -->
+      <div *ngIf="currentStep() === 4" class="space-y-6">
+        <h2 class="text-xl font-semibold text-primary mb-6">Étape 4 : Récapitulatif et soumission</h2>
+
+        <div class="summary-section">
+          <h3 class="text-lg font-medium text-primary mb-4">Informations personnelles</h3>
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span class="text-on-surface-variant">Nom :</span>
+              <p class="text-on-surface font-medium">{{ userName() }}</p>
+            </div>
+            <div>
+              <span class="text-on-surface-variant">Email :</span>
+              <p class="text-on-surface font-medium">{{ userEmail() }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-section">
+          <h3 class="text-lg font-medium text-primary mb-4">Détails du sinistre</h3>
+          <div class="space-y-3 text-sm">
+            <div class="flex justify-between">
+              <span class="text-on-surface-variant">Date du sinistre :</span>
+              <span class="text-on-surface font-medium">{{ formatDate(claimForm.get('dateSinistre')?.value) }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-on-surface-variant">Heure :</span>
+              <span class="text-on-surface font-medium">{{ claimForm.get('heureSinistre')?.value || '—' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-on-surface-variant">Type de sinistre :</span>
+              <span class="text-on-surface font-medium">{{ getTypeLabel(claimForm.get('type')?.value) }}</span>
+            </div>
+            <div>
+              <span class="text-on-surface-variant">Description :</span>
+              <p class="text-on-surface font-medium mt-1">{{ claimForm.get('description')?.value }}</p>
+            </div>
+            <div *ngIf="claimForm.get('lieu')?.value" class="flex justify-between">
+              <span class="text-on-surface-variant">Lieu :</span>
+              <span class="text-on-surface font-medium">{{ claimForm.get('lieu')?.value }}</span>
+            </div>
+            <div *ngIf="claimForm.get('estimation')?.value" class="flex justify-between">
+              <span class="text-on-surface-variant">Estimation :</span>
+              <span class="text-on-surface font-medium">{{ claimForm.get('estimation')?.value }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="uploadedFiles().length > 0" class="summary-section">
+          <h3 class="text-lg font-medium text-primary mb-4">Fichiers joints ({{ validFileCount() }})</h3>
+          <div class="space-y-2 text-sm">
+            @for (file of uploadedFiles(); track file.originalName + '_' + file.size) {
+              <div class="flex justify-between items-center py-2 border-b border-outline-variant/30">
+                <div class="flex items-center gap-2">
+                  @if (file.previewUrl) {
+                    <img [src]="file.previewUrl" class="w-6 h-6 rounded object-cover">
+                  } @else {
+                    <span class="material-symbols-outlined text-sm text-on-surface-variant">{{ getFileIcon(file) }}</span>
+                  }
+                  <span class="text-on-surface">{{ file.originalName }}</span>
+                </div>
+                <span class="text-on-surface-variant text-xs">{{ formatFileSize(file.size) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3">
+          <input type="checkbox" formControlName="termsAccepted" class="mt-1 custom-checkbox">
+          <label class="text-sm text-on-surface cursor-pointer">
+            Je confirme que toutes les informations fournies sont exactes et j'accepte les conditions générales.
+          </label>
+        </div>
+        <p *ngIf="claimForm.get('termsAccepted')?.invalid && claimForm.get('termsAccepted')?.touched" class="text-red-500 text-xs">
+          Vous devez accepter les conditions pour soumettre la déclaration
+        </p>
+
+        <div class="flex justify-between">
+          <button type="button" (click)="previousStep()" class="btn-secondary px-6 py-3 rounded-lg font-semibold text-sm">
+            Retour
+          </button>
+          <button type="button" (click)="submitClaim()" class="btn-primary px-6 py-3 rounded-lg font-semibold text-sm"
+                  [disabled]="isSubmitting()">
+            <span *ngIf="isSubmitting()" class="flex items-center gap-2">
+              <span class="animate-spin material-symbols-outlined text-sm">progress_activity</span>
+              Envoi en cours...
+            </span>
+            <span *ngIf="!isSubmitting()">Soumettre la déclaration</span>
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </ng-container>
+</div>

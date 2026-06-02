@@ -1,0 +1,128 @@
+﻿<div class="mb-10">
+  <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Messagerie</h1>
+  <p class="text-on-surface-variant mt-1">Échangez avec votre gestionnaire.</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-14rem)]">
+  <!-- Conversations list -->
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+    <div class="p-4 border-b border-surface-container-low">
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+        <input class="w-full bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 text-xs"
+               placeholder="Rechercher..." type="text"
+               [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" />
+      </div>
+    </div>
+
+    @if (loading() && conversations().length === 0) {
+      <div class="flex-1 flex items-center justify-center">
+        <span class="material-symbols-outlined animate-spin text-primary">progress_activity</span>
+      </div>
+    } @else if (filteredConversations().length === 0) {
+      <div class="flex-1 flex flex-col items-center justify-center p-6 text-center">
+        <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">chat_bubble_outline</span>
+        <p class="text-xs text-on-surface-variant">Aucune conversation</p>
+      </div>
+    } @else {
+      <div class="flex-1 overflow-y-auto">
+        @for (conv of filteredConversations(); track conv.id) {
+          <div class="p-4 cursor-pointer transition-colors border-b border-surface-container-low last:border-b-0"
+               [class.bg-primary/5]="selectedConversationId() === conv.id"
+               [class.border-l-4]="selectedConversationId() === conv.id"
+               [class.border-primary]="selectedConversationId() === conv.id"
+               [class.hover:bg-surface-container-low]="selectedConversationId() !== conv.id"
+               (click)="selectConversation(conv.id)">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-xs font-bold text-on-surface">
+                @if (conv.participant1Id === authService.userId()) {
+                  {{ conv.participant2Nom }}
+                } @else {
+                  {{ conv.participant1Nom }}
+                }
+              </span>
+              <div class="flex items-center gap-2">
+                @if (conv.messagesNonLus > 0) {
+                  <span class="bg-primary text-on-primary text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {{ conv.messagesNonLus }}
+                  </span>
+                }
+                <span class="text-[10px] text-slate-400">{{ formatTime(conv.dernierMessageDate) }}</span>
+              </div>
+            </div>
+            <p class="text-[11px] text-on-surface-variant truncate">{{ conv.dernierMessage }}</p>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Chat area -->
+  <div class="lg:col-span-2 bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+    @if (!selectedConversation()) {
+      <div class="flex-1 flex flex-col items-center justify-center p-6 text-center">
+        <span class="material-symbols-outlined text-5xl text-slate-300 mb-3">forum</span>
+        <p class="text-sm text-on-surface-variant font-medium">Sélectionnez une conversation</p>
+        <p class="text-xs text-slate-400 mt-1">Choisissez une conversation dans la liste pour commencer à échanger</p>
+      </div>
+    } @else {
+      <!-- Chat header -->
+      <div class="p-4 border-b border-surface-container-low flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+          <span class="material-symbols-outlined text-primary text-base">support_agent</span>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-on-surface">
+            @if (selectedConversation()?.participant1Id === authService.userId()) {
+              {{ selectedConversation()?.participant2Nom }}
+            } @else {
+              {{ selectedConversation()?.participant1Nom }}
+            }
+          </p>
+          <p class="text-[11px] text-slate-400">Gestionnaire</p>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div id="chat-messages-assure" class="flex-1 p-6 space-y-4 overflow-y-auto">
+        @for (msg of messages(); track msg.id) {
+          @if (isMyMessage(msg)) {
+            <div class="flex gap-3 justify-end">
+              <div class="bg-primary text-on-primary rounded-xl rounded-br-sm p-4 max-w-md">
+                <p class="text-xs leading-relaxed">{{ msg.contenu }}</p>
+                <span class="text-[10px] text-on-primary/60 mt-2 block text-right">{{ formatTime(msg.createdAt) }}</span>
+              </div>
+            </div>
+          } @else {
+            <div class="flex gap-3">
+              <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-primary text-sm">support_agent</span>
+              </div>
+              <div class="bg-surface-container-low rounded-xl rounded-bl-sm p-4 max-w-md">
+                <p class="text-xs leading-relaxed text-on-surface">{{ msg.contenu }}</p>
+                <span class="text-[10px] text-slate-400 mt-2 block">{{ formatTime(msg.createdAt) }}</span>
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <!-- Input -->
+      <div class="p-4 border-t border-surface-container-low flex gap-3">
+        <input class="flex-1 bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/30"
+               placeholder="Écrire un message..." type="text"
+               [ngModel]="nouveauMessage()" (ngModelChange)="nouveauMessage.set($event)"
+               (keyup.enter)="envoyerMessage()" />
+        <button class="bg-primary text-on-primary px-5 py-2.5 rounded-lg flex items-center gap-2 text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
+                (click)="envoyerMessage()" [disabled]="sending() || !nouveauMessage().trim()">
+          @if (sending()) {
+            <span class="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+          } @else {
+            <span class="material-symbols-outlined text-sm">send</span>
+          }
+          Envoyer
+        </button>
+      </div>
+    }
+  </div>
+</div>

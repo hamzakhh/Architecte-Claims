@@ -1,0 +1,118 @@
+<div class="mb-10">
+  <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Monitoring IA</h1>
+  <p class="text-on-surface-variant mt-1">Supervision du système d'analyse IA et performances.</p>
+</div>
+
+@if (loading()) {
+  <div class="flex items-center justify-center py-20">
+    <span class="material-symbols-outlined animate-spin text-3xl text-primary">progress_activity</span>
+    <span class="ml-3 text-on-surface-variant">Chargement...</span>
+  </div>
+} @else {
+
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 p-4 rounded-xl text-red-800 text-sm mb-6">{{ error() }}</div>
+  }
+
+  <!-- Stats Grid -->
+  @if (stats()) {
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+      <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Analyses totales</span>
+        <h3 class="text-2xl font-bold text-primary mt-1">{{ stats()!.totalAnalyses }}</h3>
+      </div>
+      <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Terminées</span>
+        <h3 class="text-2xl font-bold text-emerald-600 mt-1">{{ stats()!.analysesTerminees }}</h3>
+      </div>
+      <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">En cours</span>
+        <h3 class="text-2xl font-bold text-blue-600 mt-1">{{ stats()!.analysesEnCours }}</h3>
+      </div>
+      <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Expert requis</span>
+        <h3 class="text-2xl font-bold text-orange-600 mt-1">{{ stats()!.necessitantExpert }}</h3>
+        <span class="text-[10px] text-slate-400">{{ stats()!.tauxExpertRequis | number:'1.1-1' }}% des analyses</span>
+      </div>
+      <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Critiques</span>
+        <h3 class="text-2xl font-bold text-red-600 mt-1">{{ stats()!.critiques }}</h3>
+      </div>
+    </div>
+
+    <!-- IA Config Status -->
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm mb-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-primary">smart_toy</span>
+          <div>
+            <h3 class="text-sm font-bold text-primary">Configuration Ollama</h3>
+            <p class="text-xs text-on-surface-variant">Modèle : <strong>{{ stats()!.modeleIA }}</strong></p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full {{ stats()!.ollamaEnabled ? 'bg-emerald-500' : 'bg-slate-300' }}"></span>
+          <span class="text-xs font-semibold {{ stats()!.ollamaEnabled ? 'text-emerald-700' : 'text-slate-500' }}">
+            {{ stats()!.ollamaEnabled ? 'Ollama connecté' : 'Mode simulation' }}
+          </span>
+        </div>
+      </div>
+      @if (!stats()!.ollamaEnabled) {
+        <div class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
+          <span class="material-symbols-outlined text-sm align-middle mr-1">info</span>
+          Ollama n'est pas activé. Pour l'activer, modifiez <code class="bg-amber-100 px-1 rounded">application.properties</code> :
+          <code class="bg-amber-100 px-1 rounded block mt-1">ollama.enabled=true</code>
+          Assurez-vous que Ollama est installé et le modèle <strong>{{ stats()!.modeleIA }}</strong> est téléchargé : <code class="bg-amber-100 px-1 rounded">ollama pull {{ stats()!.modeleIA }}</code>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Recent Analyses Table -->
+  <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+    <div class="px-6 py-4 border-b border-surface-container-low">
+      <h2 class="text-xs font-bold text-primary uppercase tracking-widest">Analyses récentes ({{ analyses().length }})</h2>
+    </div>
+    @if (analyses().length === 0) {
+      <div class="px-6 py-10 text-center text-on-surface-variant text-sm">
+        <span class="material-symbols-outlined text-3xl mb-2 block">psychology</span>
+        Aucune analyse IA effectuée
+      </div>
+    } @else {
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-surface-container-low/50">
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Référence</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Sévérité</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Complexité</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Risque</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Expert</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Modèle</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Date</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50">
+          @for (analyse of analyses(); track analyse.id) {
+            <tr class="hover:bg-slate-50/50 transition-colors">
+              <td class="px-6 py-4 text-sm font-bold text-primary">{{ analyse.claimReference }}</td>
+              <td class="px-6 py-4">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ getSeveriteClass(analyse.severite) }}">{{ analyse.severite }}</span>
+              </td>
+              <td class="px-6 py-4 text-xs text-on-surface-variant">{{ analyse.scoreComplexite }}/100</td>
+              <td class="px-6 py-4 text-xs text-on-surface-variant">{{ analyse.scoreRisque }}/100</td>
+              <td class="px-6 py-4">
+                @if (analyse.necessiteExpertHumain) {
+                  <span class="text-[10px] bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full font-bold">Requis</span>
+                } @else {
+                  <span class="text-[10px] bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-bold">Non</span>
+                }
+              </td>
+              <td class="px-6 py-4 text-xs text-on-surface-variant">{{ analyse.modeleIA }}</td>
+              <td class="px-6 py-4 text-xs text-slate-500">{{ formatDate(analyse.dateAnalyse) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+}

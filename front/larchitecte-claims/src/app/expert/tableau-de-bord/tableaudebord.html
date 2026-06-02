@@ -1,0 +1,163 @@
+﻿<div class="mb-10">
+  <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Tableau de Bord Expert</h1>
+  <p class="text-on-surface-variant mt-1">Gestion de vos missions d'expertise.</p>
+</div>
+
+@if (loading()) {
+  <div class="flex items-center justify-center py-20">
+    <span class="material-symbols-outlined animate-spin text-4xl text-primary">progress_activity</span>
+    <span class="ml-3 text-on-surface-variant">Chargement...</span>
+  </div>
+} @else if (error()) {
+  <div class="bg-error-container/20 border border-error-container rounded-xl p-6 text-center">
+    <span class="material-symbols-outlined text-error text-3xl">error</span>
+    <p class="text-error mt-2">{{ error() }}</p>
+    <button class="mt-4 px-6 py-2 bg-primary text-on-primary rounded-lg text-sm font-semibold" (click)="loadDashboard()">Réessayer</button>
+  </div>
+} @else {
+
+<!-- Expert Stats -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Missions en cours</span>
+    <h3 class="text-[2.75rem] font-bold text-primary tracking-tighter mt-2">{{ stats()?.missionsEnCours ?? 0 }}</h3>
+    <div class="mt-4 flex items-center text-xs text-on-tertiary-container font-semibold">
+      <span class="material-symbols-outlined text-sm mr-1">assignment</span>En expertise
+    </div>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Rapports à rendre</span>
+    <h3 class="text-[2.75rem] font-bold text-on-tertiary-container tracking-tighter mt-2">{{ stats()?.rapportsARendre ?? 0 }}</h3>
+    <div class="mt-4 flex items-center text-xs text-error font-semibold">
+      <span class="material-symbols-outlined text-sm mr-1">schedule</span>@if (stats()?.rapportsARendre && stats()!.rapportsARendre > 0) { Urgent } @else { À jour }
+    </div>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Complétés ce mois</span>
+    <h3 class="text-[2.75rem] font-bold text-emerald-600 tracking-tighter mt-2">{{ stats()?.completesCeMois ?? 0 }}</h3>
+    <div class="mt-4 flex items-center text-xs text-emerald-600 font-semibold uppercase tracking-widest">Ce mois</div>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total missions</span>
+    <h3 class="text-[2.75rem] font-bold text-primary tracking-tighter mt-2">{{ stats()?.totalMissions ?? 0 }}</h3>
+    <div class="mt-4 flex items-center text-xs text-primary/60 font-semibold uppercase tracking-widest">Toutes missions</div>
+  </div>
+</div>
+
+<!-- Current Missions -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm mb-6">
+  <div class="px-6 py-4 border-b border-surface-container-low flex justify-between items-center">
+    <h2 class="text-sm font-bold text-primary uppercase tracking-widest">Missions en cours</h2>
+    <a class="text-xs font-bold text-primary hover:text-on-tertiary-container transition-colors tracking-widest" routerLink="/expert/dossiers">Tout voir</a>
+  </div>
+  @if (recentClaims().length === 0) {
+    <div class="p-8 text-center text-on-surface-variant">
+      <span class="material-symbols-outlined text-4xl text-slate-300">folder_off</span>
+      <p class="mt-2">Aucune mission en cours</p>
+    </div>
+  } @else {
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low/50">
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Référence</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Assuré</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Type</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Statut</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Action</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        @for (claim of recentClaims(); track claim.id) {
+          <tr class="hover:bg-slate-50/50 transition-colors cursor-pointer">
+            <td class="px-6 py-5 text-sm font-bold text-primary">{{ claim.reference || ('#' + claim.id.substring(0, 8)) }}</td>
+            <td class="px-6 py-5 text-xs text-on-surface-variant font-medium">{{ claim.assureNom || 'N/A' }}</td>
+            <td class="px-6 py-5 text-xs text-on-surface-variant font-medium">{{ getTypeLabel(claim.type) }}</td>
+            <td class="px-6 py-5"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ getStatutClass(claim.statut) }}">{{ getStatutLabel(claim.statut) }}</span></td>
+            <td class="px-6 py-5 text-right">
+              <a [routerLink]="['/expert/rapport-expertise']" [queryParams]="{claimId: claim.id}" class="px-3 py-1.5 bg-primary text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all inline-block">Expertiser</a>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<!-- Expertises en attente / en cours -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm mb-6">
+  <div class="px-6 py-4 border-b border-surface-container-low flex justify-between items-center">
+    <h2 class="text-sm font-bold text-primary uppercase tracking-widest">Rapports d'expertise</h2>
+    <a class="text-xs font-bold text-primary hover:text-on-tertiary-container transition-colors tracking-widest" routerLink="/expert/rapport-expertise">Tous les rapports</a>
+  </div>
+  @if (expertisesEnCours().length === 0) {
+    <div class="p-8 text-center text-on-surface-variant">
+      <span class="material-symbols-outlined text-4xl text-slate-300">edit_note</span>
+      <p class="mt-2">Aucun rapport en cours</p>
+    </div>
+  } @else {
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low/50">
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Référence</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Gestionnaire</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Statut</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Date</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Action</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        @for (exp of expertisesEnCours(); track exp.id) {
+          <tr class="hover:bg-slate-50/50 transition-colors">
+            <td class="px-6 py-5 text-sm font-bold text-primary">{{ exp.claimReference }}</td>
+            <td class="px-6 py-5 text-xs text-on-surface-variant font-medium">{{ exp.gestionnaireNom || 'N/A' }}</td>
+            <td class="px-6 py-5"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ getExpertiseStatutClass(exp.statut) }}">{{ getExpertiseStatutLabel(exp.statut) }}</span></td>
+            <td class="px-6 py-5 text-xs text-slate-500">{{ formatDate(exp.createdAt) }}</td>
+            <td class="px-6 py-5 text-right">
+              @if (exp.statut === 'EN_ATTENTE' || exp.statut === 'EN_COURS') {
+                <a [routerLink]="['/expert/rapport-expertise']" [queryParams]="{expertiseId: exp.id, claimId: exp.claimId}" class="px-3 py-1.5 bg-primary text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all inline-block">Rédiger</a>
+              } @else {
+                <a [routerLink]="['/expert/rapport-expertise']" [queryParams]="{expertiseId: exp.id, claimId: exp.claimId}" class="px-3 py-1.5 bg-surface-container-low text-on-surface-variant rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-surface-container transition-colors inline-block">Voir</a>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<!-- Quick Actions -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <a routerLink="/expert/dossiers" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm hover:shadow-md transition-shadow">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+        <span class="material-symbols-outlined text-primary">folder_copy</span>
+      </div>
+      <h3 class="font-semibold text-primary">Mes dossiers</h3>
+    </div>
+    <p class="text-sm text-on-surface-variant mb-4">Consulter tous vos dossiers assignés</p>
+    <span class="w-full block text-center bg-primary text-white py-2 rounded-lg text-sm font-semibold">Voir</span>
+  </a>
+  <a routerLink="/expert/rapport-expertise" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm hover:shadow-md transition-shadow">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+        <span class="material-symbols-outlined text-emerald-600">edit_note</span>
+      </div>
+      <h3 class="font-semibold text-primary">Rapports</h3>
+    </div>
+    <p class="text-sm text-on-surface-variant mb-4">Rédiger et soumettre vos rapports</p>
+    <span class="w-full block text-center bg-emerald-600 text-white py-2 rounded-lg text-sm font-semibold">Rédiger</span>
+  </a>
+  <a routerLink="/expert/messagerie" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm hover:shadow-md transition-shadow">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+        <span class="material-symbols-outlined text-amber-600">chat_bubble</span>
+      </div>
+      <h3 class="font-semibold text-primary">Messagerie</h3>
+    </div>
+    <p class="text-sm text-on-surface-variant mb-4">Communiquer avec les gestionnaires</p>
+    <span class="w-full block text-center bg-amber-600 text-white py-2 rounded-lg text-sm font-semibold">Voir</span>
+  </a>
+</div>
+
+}

@@ -1,0 +1,85 @@
+﻿<div class="mb-10">
+  <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Tableau de Bord</h1>
+  <p class="text-on-surface-variant mt-1">Bienvenue, {{ userName() }}. Voici un aperçu de vos sinistres.</p>
+</div>
+
+<!-- Loading -->
+<div *ngIf="isLoading()" class="flex items-center justify-center py-12">
+  <span class="material-symbols-outlined animate-spin text-3xl text-primary">progress_activity</span>
+  <span class="ml-3 text-on-surface-variant">Chargement...</span>
+</div>
+
+<!-- Dashboard Content -->
+<ng-container *ngIf="!isLoading()">
+  <!-- Quick Stats -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+      <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Sinistres en cours</span>
+      <h3 class="text-[2.75rem] font-bold text-primary tracking-tighter mt-2">{{ enCoursCount() }}</h3>
+      <div class="mt-4 flex items-center text-xs text-on-tertiary-container font-semibold">
+        <span class="material-symbols-outlined text-sm mr-1">sync</span>En traitement
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+      <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">En attente</span>
+      <h3 class="text-[2.75rem] font-bold text-on-tertiary-container tracking-tighter mt-2">{{ enRevisionCount() }}</h3>
+      <div class="mt-4 flex items-center text-xs text-error font-semibold">
+        <span class="material-symbols-outlined text-sm mr-1">schedule</span>Action requise
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+      <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Résolus</span>
+      <h3 class="text-[2.75rem] font-bold text-emerald-600 tracking-tighter mt-2">{{ resolusCount() }}</h3>
+      <div class="mt-4 flex items-center text-xs text-emerald-600 font-semibold uppercase tracking-widest">Validés / Clôturés</div>
+    </div>
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+      <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total</span>
+      <h3 class="text-[2.75rem] font-bold text-primary tracking-tighter mt-2">{{ totalCount() }}</h3>
+      <div class="mt-4 flex items-center text-xs text-primary/60 font-semibold uppercase tracking-widest">Tous les sinistres</div>
+    </div>
+  </div>
+
+  <!-- Recent Claims Table -->
+  <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+    <div class="px-6 py-4 border-b border-surface-container-low flex justify-between items-center">
+      <h2 class="text-sm font-bold text-primary uppercase tracking-widest">Sinistres récents</h2>
+      <a class="text-xs font-bold text-primary hover:text-on-tertiary-container transition-colors tracking-widest" routerLink="/assure/mes-sinistres">Tout voir</a>
+    </div>
+
+    <!-- Empty state -->
+    <div *ngIf="recentClaims().length === 0" class="px-6 py-12 text-center">
+      <span class="material-symbols-outlined text-4xl text-on-surface-variant">inbox</span>
+      <p class="text-on-surface-variant mt-2">Aucun sinistre déclaré pour le moment.</p>
+      <a routerLink="/assure/declarer-sinistre" class="inline-block mt-4 btn-primary px-6 py-3 rounded-lg font-semibold text-sm">
+        Déclarer un sinistre
+      </a>
+    </div>
+
+    <!-- Claims table -->
+    <table *ngIf="recentClaims().length > 0" class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low/50">
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Référence</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Type</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Date</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Statut</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        @for (claim of recentClaims(); track claim.id) {
+          <tr class="hover:bg-slate-50/50 transition-colors cursor-pointer" [routerLink]="['/assure/detail-sinistre', claim.id]">
+            <td class="px-6 py-5 text-sm font-bold text-primary">{{ formatClaimId(claim.id) }}</td>
+            <td class="px-6 py-5 text-xs text-on-surface-variant font-medium">{{ getTypeLabel(claim.type) }}</td>
+            <td class="px-6 py-5 text-xs text-slate-500">{{ formatDate(claim.dateSinistre) }}</td>
+            <td class="px-6 py-5 text-right">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                    [ngClass]="getStatutClass(claim.statut)">
+                {{ getStatutLabel(claim.statut) }}
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</ng-container>

@@ -1,0 +1,227 @@
+﻿<div class="mb-10">
+  <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Mes Remboursements</h1>
+  <p class="text-on-surface-variant mt-1">Suivez l'état de vos remboursements et indemnisation.</p>
+  <button (click)="showConditions.set(!showConditions())" class="mt-2 text-xs font-bold text-primary hover:underline flex items-center gap-1">
+    <span class="material-symbols-outlined text-sm">{{ showConditions() ? 'expand_less' : 'expand_more' }}</span>
+    Conditions et cas d'indemnisation
+  </button>
+</div>
+
+<!-- Conditions d'indemnisation -->
+@if (showConditions()) {
+  <div class="mb-8 bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-sm overflow-hidden">
+    <div class="p-5">
+      <h3 class="text-sm font-bold text-primary mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-base">info</span> Conditions de remboursement et cas d'indemnisation
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Conditions de remboursement</h4>
+          <ul class="space-y-1.5 text-xs text-on-surface-variant">
+            <li class="flex gap-2"><span class="text-emerald-500 font-bold">1.</span> Le sinistre doit être déclaré et documenté (photos, rapports)</li>
+            <li class="flex gap-2"><span class="text-emerald-500 font-bold">2.</span> L'assuré doit avoir payé toutes ses primes à jour</li>
+            <li class="flex gap-2"><span class="text-emerald-500 font-bold">3.</span> Le sinistre doit être couvert par le contrat d'assurance</li>
+            <li class="flex gap-2"><span class="text-emerald-500 font-bold">4.</span> La franchise est déduite du montant des dégâts</li>
+            <li class="flex gap-2"><span class="text-emerald-500 font-bold">5.</span> L'indemnisation est plafonnée au plafond de garantie</li>
+            <li class="flex gap-2"><span class="text-emerald-500 font-bold">6.</span> Le taux de remboursement dépend du type de contrat</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Cas d'indemnisation</h4>
+          <ul class="space-y-1.5 text-xs text-on-surface-variant">
+            <li class="flex gap-2"><span class="text-blue-500 font-bold">Accident</span> Dégâts matériels ou corporels suite à un accident</li>
+            <li class="flex gap-2"><span class="text-blue-500 font-bold">Vol</span> Remboursement en cas de vol avec effraction ou agression</li>
+            <li class="flex gap-2"><span class="text-blue-500 font-bold">Incendie</span> Dommages causés par le feu, la fumée ou l'eau d'extinction</li>
+            <li class="flex gap-2"><span class="text-blue-500 font-bold">Dégât des eaux</span> Dommages causés par une fuite ou un débordement d'eau</li>
+            <li class="flex gap-2"><span class="text-blue-500 font-bold">Catastrophe naturelle</span> Événements naturels exceptionnels (inondation, tempête)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+        <h4 class="text-xs font-bold text-amber-700 uppercase mb-1">Formule de calcul</h4>
+        <p class="text-[11px] text-amber-800">
+          Montant après franchise = max(0, Dégâts − Franchise) →
+          Indemnisation = Après franchise × Taux →
+          Si &gt; Plafond → montant limité au plafond
+        </p>
+      </div>
+      <div class="mt-3 p-3 bg-violet-50 rounded-lg border border-violet-200">
+        <h4 class="text-xs font-bold text-violet-700 uppercase mb-1">Mode de paiement</h4>
+        <p class="text-[11px] text-violet-800">
+          Tous les remboursements sont effectués via <strong>Stripe</strong> par carte bancaire (Visa, Mastercard, et autres cartes supportées par Stripe). Aucune autre méthode de paiement n'est disponible.
+        </p>
+      </div>
+    </div>
+  </div>
+}
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">En attente</span>
+    <h3 class="text-2xl font-bold text-amber-600 tracking-tighter mt-2">{{ totalEnAttente }}</h3>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">En cours</span>
+    <h3 class="text-2xl font-bold text-blue-600 tracking-tighter mt-2">{{ reimbursements.filter(r => r.statut === 'EN_COURS_TRAITEMENT' || r.statut === 'VALIDEE').length }}</h3>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total payé</span>
+    <h3 class="text-2xl font-bold text-emerald-600 tracking-tighter mt-2">{{ totalPaye | number:'1.2-2' }} DT</h3>
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="flex justify-center h-32"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div></div>
+} @else if (reimbursements.length === 0) {
+  <div class="bg-surface-container-lowest rounded-xl p-8 text-center">
+    <span class="material-symbols-outlined text-on-surface-variant text-4xl">payments</span>
+    <p class="text-on-surface-variant mt-2">Aucun remboursement pour le moment</p>
+  </div>
+} @else {
+  <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low/50">
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Référence</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Sinistre</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Dégâts</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Proposé</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Méthode</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Statut</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Date</th>
+          <th class="px-6 py-4"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        @for (rem of reimbursements; track rem.id) {
+          <tr class="hover:bg-slate-50/50 transition-colors">
+            <td class="px-6 py-5 text-sm font-bold text-primary">{{ rem.reference }}</td>
+            <td class="px-6 py-5 text-xs text-on-surface-variant font-medium">{{ rem.claimReference }}</td>
+            <td class="px-6 py-5 text-xs text-slate-500">{{ rem.montantDegats | number:'1.2-2' }} DT</td>
+            <td class="px-6 py-5 text-sm font-semibold text-on-surface">{{ rem.montantPropose | number:'1.2-2' }} DT</td>
+            <td class="px-6 py-5 text-xs text-on-surface-variant">{{ getMethodeLabel(rem.methodePaiement) }}</td>
+            <td class="px-6 py-5"><span class="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase {{ getStatutColor(rem.statut) }}">{{ getStatutLabel(rem.statut) }}</span></td>
+            <td class="px-6 py-5 text-xs text-slate-500">{{ formatDate(rem.dateProposition) }}</td>
+            <td class="px-6 py-5">
+              <div class="flex gap-1.5">
+                <button (click)="viewProposition(rem)" class="text-primary hover:underline text-xs font-medium">Détail</button>
+                @if (rem.statut === 'EN_ATTENTE') {
+                  <button (click)="openDetail(rem)" class="text-amber-600 hover:underline text-xs font-medium">Répondre</button>
+                }
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<!-- Modal : Proposition détaillée + Workflow -->
+@if (proposition()) {
+  <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" (click)="closeProposition()">
+    <div class="bg-surface-container-lowest rounded-2xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-primary">Proposition d'indemnisation</h3>
+        <span class="inline-flex px-3 py-1 rounded-full text-xs font-bold uppercase {{ getStatutColor(proposition()!.statut) }}">{{ getStatutLabel(proposition()!.statut) }}</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 mb-5">
+        <div class="p-3 bg-slate-50 rounded-lg">
+          <p class="text-[10px] font-bold text-slate-400 uppercase">Référence</p>
+          <p class="text-sm font-bold text-primary">{{ proposition()!.reference }}</p>
+        </div>
+        <div class="p-3 bg-slate-50 rounded-lg">
+          <p class="text-[10px] font-bold text-slate-400 uppercase">Sinistre</p>
+          <p class="text-sm font-medium">{{ proposition()!.claimReference }}</p>
+        </div>
+        <div class="p-3 bg-slate-50 rounded-lg">
+          <p class="text-[10px] font-bold text-slate-400 uppercase">Type sinistre</p>
+          <p class="text-sm font-medium">{{ proposition()!.typeSinistre }}</p>
+        </div>
+        <div class="p-3 bg-slate-50 rounded-lg">
+          <p class="text-[10px] font-bold text-slate-400 uppercase">Gestionnaire</p>
+          <p class="text-sm font-medium">{{ proposition()!.gestionnaireNom }}</p>
+        </div>
+      </div>
+
+      <!-- Détail du calcul -->
+      <div class="mb-5 p-4 bg-blue-50 rounded-xl border border-blue-200">
+        <h4 class="text-xs font-bold text-blue-700 uppercase mb-2">Détail du calcul</h4>
+        <div class="grid grid-cols-3 gap-2 text-xs mb-2">
+          <p><span class="text-slate-500">Dégâts :</span> <strong>{{ proposition()!.montantDegats | number:'1.2-2' }} DT</strong></p>
+          <p><span class="text-slate-500">Franchise :</span> {{ proposition()!.franchise | number:'1.2-2' }} DT</p>
+          <p><span class="text-slate-500">Après franchise :</span> {{ proposition()!.montantApresFranchise | number:'1.2-2' }} DT</p>
+          <p><span class="text-slate-500">Taux :</span> {{ proposition()!.tauxRemboursement * 100 }}%</p>
+          <p><span class="text-slate-500">Calculé :</span> {{ proposition()!.montantIndemnisationCalcule | number:'1.2-2' }} DT</p>
+          <p><span class="text-slate-500">Plafond :</span> {{ proposition()!.plafondGarantie | number:'1.2-2' }} DT</p>
+        </div>
+        <div class="pt-2 border-t border-blue-200 flex justify-between items-center">
+          <span class="text-sm font-bold text-blue-700">Montant proposé :</span>
+          <span class="text-lg font-bold text-primary">{{ proposition()!.montantPropose | number:'1.2-2' }} DT</span>
+        </div>
+        @if (proposition()!.justification) {
+          <p class="mt-2 text-xs text-slate-600 italic">{{ proposition()!.justification }}</p>
+        }
+      </div>
+
+      <!-- Paiement -->
+      <div class="mb-5 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+        <h4 class="text-xs font-bold text-emerald-700 uppercase mb-2">Paiement via Stripe</h4>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <p><span class="text-slate-500">Méthode :</span> {{ getMethodeLabel(proposition()!.methodePaiement) }}</p>
+          <p class="text-slate-500">Cartes acceptées : Visa, Mastercard</p>
+          @if (proposition()!.stripeSessionId) { <p><span class="text-slate-500">Session Stripe :</span> {{ proposition()!.stripeSessionId }}</p> }
+          @if (proposition()!.stripePaymentIntentId) { <p><span class="text-slate-500">Payment Intent :</span> {{ proposition()!.stripePaymentIntentId }}</p> }
+          @if (proposition()!.transactionId) { <p><span class="text-slate-500">Transaction :</span> {{ proposition()!.transactionId }}</p> }
+          @if (proposition()!.confirmationPaiement) { <p><span class="text-slate-500">Confirmation :</span> {{ proposition()!.confirmationPaiement }}</p> }
+        </div>
+      </div>
+
+      <!-- Workflow timeline -->
+      @if (proposition()!.historiqueWorkflow && proposition()!.historiqueWorkflow.length > 0) {
+        <div class="mb-4">
+          <h4 class="text-xs font-bold text-slate-500 uppercase mb-3">Suivi du remboursement</h4>
+          <div class="space-y-0">
+            @for (etape of proposition()!.historiqueWorkflow; track etape.date) {
+              <div class="flex gap-3 items-start">
+                <div class="flex flex-col items-center">
+                  <div class="w-3 h-3 rounded-full {{ getStatutColor(etape.statut).split(' ')[0] }} border-2 border-white shadow-sm"></div>
+                  @if (!$last) { <div class="w-0.5 h-6 bg-slate-200"></div> }
+                </div>
+                <div class="pb-3">
+                  <p class="text-xs font-semibold text-on-surface">{{ etape.description }}</p>
+                  <p class="text-[10px] text-slate-400">{{ etape.effectueParNom }} — {{ formatDate(etape.date) }}</p>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="text-right"><button (click)="closeProposition()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg text-sm font-medium">Fermer</button></div>
+    </div>
+  </div>
+}
+
+<!-- Modal : Accepter / Refuser -->
+@if (selectedRem()) {
+  <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" (click)="closeDetail()">
+    <div class="bg-surface-container-lowest rounded-2xl p-6 w-full max-w-md shadow-xl" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-semibold text-primary mb-4">Proposition d'indemnisation</h3>
+      <div class="space-y-3 text-sm mb-4">
+        <p><span class="text-on-surface-variant">Référence :</span> <strong>{{ selectedRem()!.reference }}</strong></p>
+        <p><span class="text-on-surface-variant">Sinistre :</span> {{ selectedRem()!.claimReference }}</p>
+        <p><span class="text-on-surface-variant">Dégâts :</span> {{ selectedRem()!.montantDegats | number:'1.2-2' }} DT</p>
+        <p><span class="text-on-surface-variant">Franchise :</span> {{ selectedRem()!.franchise | number:'1.2-2' }} DT</p>
+        <p><span class="text-on-surface-variant">Montant proposé :</span> <strong class="text-primary">{{ selectedRem()!.montantPropose | number:'1.2-2' }} DT</strong></p>
+        <p><span class="text-on-surface-variant">Méthode :</span> Carte bancaire (Stripe)</p>
+      </div>
+      <textarea [(ngModel)]="motifRefus" placeholder="Motif de refus (obligatoire si refus)" class="w-full border rounded-lg p-2 text-sm mb-3" rows="2"></textarea>
+      <div class="flex gap-3">
+        <button (click)="validateRem(selectedRem()!)" class="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium">Accepter</button>
+        <button (click)="refuseRem(selectedRem()!)" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium" [disabled]="!motifRefus()">Refuser</button>
+      </div>
+    </div>
+  </div>
+}

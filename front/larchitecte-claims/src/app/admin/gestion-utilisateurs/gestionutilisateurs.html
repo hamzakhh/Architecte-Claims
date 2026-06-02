@@ -1,0 +1,365 @@
+﻿<div class="mb-10">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Gestion des Utilisateurs</h1>
+      <p class="text-on-surface-variant mt-1">Administration des comptes et des rôles.</p>
+    </div>
+    <button (click)="openCreateModal()" class="bg-primary text-on-primary px-6 py-3 rounded-lg font-semibold text-sm flex items-center gap-2 hover:opacity-90 transition-all">
+      <span class="material-symbols-outlined text-sm">person_add</span>Nouvel utilisateur
+    </button>
+  </div>
+</div>
+
+<!-- Success message -->
+@if (successMessage()) {
+  <div class="bg-emerald-50 text-emerald-700 p-4 rounded-xl mb-6 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">check_circle</span>
+    <span class="text-sm font-medium">{{ successMessage() }}</span>
+  </div>
+}
+
+<!-- Error -->
+@if (error()) {
+  <div class="bg-error-container text-on-error-container p-4 rounded-xl mb-6 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">error</span>
+    <span class="text-sm font-medium">{{ error() }}</span>
+  </div>
+}
+
+<!-- Stats -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Utilisateurs totaux</span>
+    <h3 class="text-[2.75rem] font-bold text-primary tracking-tighter mt-2">{{ totalUsers() }}</h3>
+    <div class="mt-4 flex items-center text-xs text-on-surface-variant font-semibold">
+      <span class="material-symbols-outlined text-sm mr-1">group</span>Comptes
+    </div>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Assurés</span>
+    <h3 class="text-[2.75rem] font-bold text-on-tertiary-container tracking-tighter mt-2">{{ totalAssures() }}</h3>
+    <div class="mt-4 flex items-center text-xs text-on-tertiary-container font-semibold uppercase tracking-widest">Actifs</div>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Experts</span>
+    <h3 class="text-[2.75rem] font-bold text-primary tracking-tighter mt-2">{{ totalExperts() }}</h3>
+    <div class="mt-4 flex items-center text-xs text-primary/60 font-semibold uppercase tracking-widest">Évaluateurs</div>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Gestionnaires</span>
+    <h3 class="text-[2.75rem] font-bold text-emerald-600 tracking-tighter mt-2">{{ totalGestionnaires() }}</h3>
+    <div class="mt-4 flex items-center text-xs text-emerald-600 font-semibold uppercase tracking-widest">Sinistres</div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm mb-6">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="space-y-1.5">
+      <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Rôle</label>
+      <select [ngModel]="roleFilter()" (ngModelChange)="setRoleFilter($event)" class="w-full px-4 py-2 bg-surface-container-low border-none rounded-lg text-on-surface text-sm">
+        <option value="ALL">Tous les rôles</option>
+        <option value="ASSURE">Assuré</option>
+        <option value="EXPERT">Expert</option>
+        <option value="GESTIONNAIRE">Gestionnaire</option>
+        <option value="ADMIN">Admin</option>
+      </select>
+    </div>
+    <div class="space-y-1.5">
+      <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Statut</label>
+      <select [ngModel]="statusFilter()" (ngModelChange)="setStatusFilter($event)" class="w-full px-4 py-2 bg-surface-container-low border-none rounded-lg text-on-surface text-sm">
+        <option value="ALL">Tous les statuts</option>
+        <option value="ACTIVE">Actif</option>
+        <option value="INACTIVE">Inactif</option>
+      </select>
+    </div>
+    <div class="space-y-1.5">
+      <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Recherche</label>
+      <div class="relative">
+        <input [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" class="w-full px-4 py-2 bg-surface-container-low border-none rounded-lg text-on-surface text-sm pl-10" placeholder="Nom, email..." type="text" />
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading -->
+@if (loading()) {
+  <div class="flex items-center justify-center py-20">
+    <span class="material-symbols-outlined animate-spin text-4xl text-primary">progress_activity</span>
+    <span class="ml-3 text-on-surface-variant">Chargement...</span>
+  </div>
+}
+
+<!-- Users Table -->
+@if (!loading()) {
+  <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+    <div class="px-6 py-4 border-b border-surface-container-low flex justify-between items-center">
+      <h2 class="text-sm font-bold text-primary uppercase tracking-widest">Liste des utilisateurs</h2>
+      <span class="text-xs text-slate-500">{{ filteredUsers().length }} comptes</span>
+    </div>
+    @if (filteredUsers().length === 0) {
+      <div class="p-10 text-center text-on-surface-variant">
+        <span class="material-symbols-outlined text-4xl mb-2">person_off</span>
+        <p class="text-sm">Aucun utilisateur trouvé</p>
+      </div>
+    } @else {
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-surface-container-low/50">
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Utilisateur</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Rôle</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Inscription</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Statut</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50">
+          @for (user of filteredUsers(); track user.id) {
+            <tr class="hover:bg-slate-50/50 transition-colors" [class.opacity-50]="!user.enabled">
+              <td class="px-6 py-5">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full {{ getRoleClass(user.role) }} flex items-center justify-center">
+                    <span class="material-symbols-outlined text-sm">{{ getRoleIcon(user.role) }}</span>
+                  </div>
+                  <div>
+                    <p class="text-sm font-bold text-primary">{{ user.fullName }}</p>
+                    <p class="text-[10px] text-slate-400">{{ user.email }}</p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-5">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ getRoleClass(user.role) }}">
+                  {{ getRoleLabel(user.role) }}
+                </span>
+              </td>
+              <td class="px-6 py-5 text-xs text-on-surface-variant">{{ formatDate(user.createdAt) }}</td>
+              <td class="px-6 py-5">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ user.enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500' }}">
+                  {{ user.enabled ? 'Actif' : 'Inactif' }}
+                </span>
+              </td>
+              <td class="px-6 py-5 text-right">
+                <div class="flex gap-2 justify-end">
+                  <button (click)="openDetailModal(user)" class="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors" title="Voir">
+                    <span class="material-symbols-outlined text-sm">visibility</span>
+                  </button>
+                  <button (click)="openEditRoleModal(user)" class="p-1.5 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-200 transition-colors" title="Modifier le rôle">
+                    <span class="material-symbols-outlined text-sm">edit</span>
+                  </button>
+                  <button (click)="toggleStatus(user)" class="p-1.5 {{ user.enabled ? 'bg-error/10 text-error' : 'bg-emerald-100 text-emerald-600' }} rounded-lg hover:opacity-80 transition-colors" title="{{ user.enabled ? 'Désactiver' : 'Activer' }}">
+                    <span class="material-symbols-outlined text-sm">{{ user.enabled ? 'block' : 'lock_open' }}</span>
+                  </button>
+                  <button (click)="toggleMfa(user)" class="p-1.5 {{ isMfaEnabled(user.id) ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400' }} rounded-lg hover:opacity-80 transition-colors" title="{{ isMfaEnabled(user.id) ? 'Désactiver MFA' : 'Activer MFA' }}">
+                    <span class="material-symbols-outlined text-sm">{{ isMfaEnabled(user.id) ? 'lock_person' : 'lock_open' }}</span>
+                  </button>
+                  <button (click)="openDeleteConfirm(user)" class="p-1.5 bg-error/10 text-error rounded-lg hover:bg-error/20 transition-colors" title="Supprimer">
+                    <span class="material-symbols-outlined text-sm">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+}
+
+<!-- Create User Modal -->
+@if (showCreateModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-bold text-primary">Nouvel utilisateur</h2>
+        <button (click)="closeCreateModal()" class="p-1 text-slate-400 hover:text-slate-600">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      @if (createError()) {
+        <div class="bg-error-container text-on-error-container p-3 rounded-lg mb-4 text-sm">{{ createError() }}</div>
+      }
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">Prénom *</label>
+            <input [(ngModel)]="newUser.prenom" class="w-full px-4 py-2 bg-surface-container-low border border-outline-variant/20 rounded-lg text-on-surface text-sm" placeholder="Prénom" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">Nom *</label>
+            <input [(ngModel)]="newUser.nom" class="w-full px-4 py-2 bg-surface-container-low border border-outline-variant/20 rounded-lg text-on-surface text-sm" placeholder="Nom" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">Email *</label>
+          <input [(ngModel)]="newUser.email" type="email" class="w-full px-4 py-2 bg-surface-container-low border border-outline-variant/20 rounded-lg text-on-surface text-sm" placeholder="email@exemple.fr" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">Mot de passe *</label>
+          <input [(ngModel)]="newUser.password" type="password" class="w-full px-4 py-2 bg-surface-container-low border border-outline-variant/20 rounded-lg text-on-surface text-sm" placeholder="Min. 6 caractères" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">Téléphone</label>
+            <input [(ngModel)]="newUser.telephone" class="w-full px-4 py-2 bg-surface-container-low border border-outline-variant/20 rounded-lg text-on-surface text-sm" placeholder="0612345678" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">Rôle</label>
+          <select [(ngModel)]="newUser.role" class="w-full px-4 py-2 bg-surface-container-low border border-outline-variant/20 rounded-lg text-on-surface text-sm">
+            <option value="ASSURE">Assuré</option>
+            <option value="EXPERT">Expert</option>
+            <option value="GESTIONNAIRE">Gestionnaire</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 mt-6">
+        <button (click)="closeCreateModal()" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-on-surface-variant hover:bg-slate-100 transition-colors">Annuler</button>
+        <button (click)="confirmCreate()" class="px-5 py-2.5 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:opacity-90 transition-all">Créer</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Edit Role Modal -->
+@if (showEditRoleModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-bold text-primary">Modifier le rôle</h2>
+        <button (click)="closeEditRoleModal()" class="p-1 text-slate-400 hover:text-slate-600">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <p class="text-sm text-on-surface-variant mb-4">
+        Utilisateur : <strong class="text-primary">{{ selectedUser()?.fullName }}</strong>
+      </p>
+      <div>
+        <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">Nouveau rôle</label>
+        <select [ngModel]="editRole()" (ngModelChange)="editRole.set($event)" class="w-full px-4 py-2 bg-surface-container-low border border-outline-variant/20 rounded-lg text-on-surface text-sm">
+          <option value="ASSURE">Assuré</option>
+          <option value="EXPERT">Expert</option>
+          <option value="GESTIONNAIRE">Gestionnaire</option>
+          <option value="ADMIN">Admin</option>
+        </select>
+      </div>
+      <div class="flex justify-end gap-3 mt-6">
+        <button (click)="closeEditRoleModal()" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-on-surface-variant hover:bg-slate-100 transition-colors">Annuler</button>
+        <button (click)="confirmEditRole()" class="px-5 py-2.5 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:opacity-90 transition-all">Confirmer</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Delete Confirm Modal -->
+@if (showDeleteConfirmModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 bg-error-container rounded-full flex items-center justify-center">
+          <span class="material-symbols-outlined text-on-error-container">warning</span>
+        </div>
+        <h2 class="text-lg font-bold text-primary">Confirmer la suppression</h2>
+      </div>
+      <p class="text-sm text-on-surface-variant mb-6">
+        Voulez-vous vraiment supprimer l'utilisateur <strong class="text-primary">{{ selectedUser()?.fullName }}</strong> ?
+        Cette action est irréversible.
+      </p>
+      <div class="flex justify-end gap-3">
+        <button (click)="closeDeleteConfirm()" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-on-surface-variant hover:bg-slate-100 transition-colors">Annuler</button>
+        <button (click)="confirmDelete()" class="px-5 py-2.5 bg-error text-on-primary rounded-lg text-sm font-semibold hover:opacity-90 transition-all">Supprimer</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- User Detail Modal -->
+@if (showDetailModal() && selectedUser()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-bold text-primary">Détails utilisateur</h2>
+        <button (click)="closeDetailModal()" class="p-1 text-slate-400 hover:text-slate-600">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="flex items-center gap-4 mb-6">
+        <div class="w-14 h-14 rounded-full {{ getRoleClass(selectedUser()!.role) }} flex items-center justify-center">
+          <span class="material-symbols-outlined text-2xl">{{ getRoleIcon(selectedUser()!.role) }}</span>
+        </div>
+        <div>
+          <p class="text-lg font-bold text-primary">{{ selectedUser()!.fullName }}</p>
+          <p class="text-sm text-on-surface-variant">{{ selectedUser()!.email }}</p>
+        </div>
+      </div>
+      <div class="space-y-3 bg-surface-container-lowest rounded-xl p-4">
+        <div class="flex justify-between">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Rôle</span>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ getRoleClass(selectedUser()!.role) }}">{{ getRoleLabel(selectedUser()!.role) }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Statut</span>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ selectedUser()!.enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500' }}">{{ selectedUser()!.enabled ? 'Actif' : 'Inactif' }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Téléphone</span>
+          <span class="text-sm text-on-surface">{{ selectedUser()!.telephone || '—' }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Inscription</span>
+          <span class="text-sm text-on-surface">{{ formatDate(selectedUser()!.createdAt) }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Dernière MAJ</span>
+          <span class="text-sm text-on-surface">{{ formatDate(selectedUser()!.updatedAt) }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">MFA</span>
+          <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider {{ isMfaEnabled(selectedUser()!.id) ? 'text-blue-600' : 'text-slate-400' }}">
+            <span class="material-symbols-outlined text-[10px]">{{ isMfaEnabled(selectedUser()!.id) ? 'lock_person' : 'lock_open' }}</span>
+            {{ isMfaEnabled(selectedUser()!.id) ? 'Activé' : 'Désactivé' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Expert Profile Section -->
+      @if (selectedUser()!.role === 'EXPERT') {
+        <div class="mt-4 bg-amber-50 rounded-xl p-4">
+          <h3 class="text-xs font-bold text-amber-700 uppercase tracking-widest mb-3">Profil Expert</h3>
+          <div class="space-y-2">
+            <div class="flex justify-between">
+              <span class="text-[10px] text-amber-600 uppercase tracking-widest">Spécialité</span>
+              <span class="text-xs font-bold text-amber-800">{{ getSpecialiteLabel(selectedUser()!.specialite) }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-[10px] text-amber-600 uppercase tracking-widest">Zone d'intervention</span>
+              <span class="text-xs font-bold text-amber-800">{{ selectedUser()!.zoneIntervention || '—' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-[10px] text-amber-600 uppercase tracking-widest">Note de performance</span>
+              <span class="text-xs font-bold text-amber-800">{{ selectedUser()!.notePerformance ? (selectedUser()!.notePerformance + '/5') : '—' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-[10px] text-amber-600 uppercase tracking-widest">Charge max</span>
+              <span class="text-xs font-bold text-amber-800">{{ selectedUser()!.chargeMax ? (selectedUser()!.chargeMax + ' dossiers') : '—' }}</span>
+            </div>
+            @if (selectedUser()!.certifications && selectedUser()!.certifications!.length > 0) {
+              <div>
+                <span class="text-[10px] text-amber-600 uppercase tracking-widest">Certifications</span>
+                <div class="flex flex-wrap gap-1 mt-1">
+                  @for (cert of selectedUser()!.certifications; track cert) {
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-700">{{ cert }}</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+      <div class="flex justify-end mt-6">
+        <button (click)="closeDetailModal()" class="px-5 py-2.5 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:opacity-90 transition-all">Fermer</button>
+      </div>
+    </div>
+  </div>
+}

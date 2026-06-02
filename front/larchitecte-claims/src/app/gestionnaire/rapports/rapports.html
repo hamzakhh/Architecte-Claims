@@ -1,0 +1,445 @@
+﻿<div class="mb-10">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Rapports d'Expertise</h1>
+      <p class="text-on-surface-variant mt-1">Suivi et validation des rapports d'expertise.</p>
+    </div>
+    <button (click)="openCreateExpertise()" class="bg-primary text-on-primary px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:opacity-90 transition-all">
+      <span class="material-symbols-outlined text-sm">add</span>Nouvelle expertise
+    </button>
+    <div class="flex gap-2">
+      <button (click)="exportClaimsCsv()" class="bg-surface-container-low text-on-surface-variant px-4 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-surface-container transition-all">
+        <span class="material-symbols-outlined text-sm">download</span>Export Sinistres
+      </button>
+      <button (click)="exportReimbursementsCsv()" class="bg-surface-container-low text-on-surface-variant px-4 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-surface-container transition-all">
+        <span class="material-symbols-outlined text-sm">download</span>Export Remboursements
+      </button>
+    </div>
+  </div>
+</div>
+
+@if (success()) {
+  <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+    <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+    <p class="text-sm text-emerald-700 font-medium">{{ success() }}</p>
+  </div>
+}
+
+@if (loading()) {
+  <div class="flex items-center justify-center py-20">
+    <span class="material-symbols-outlined animate-spin text-4xl text-primary">progress_activity</span>
+    <span class="ml-3 text-on-surface-variant">Chargement...</span>
+  </div>
+} @else if (error() && !showDetailModal() && !showCreateModal()) {
+  <div class="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+    <span class="material-symbols-outlined text-red-500 text-3xl">error</span>
+    <p class="text-red-600 mt-2">{{ error() }}</p>
+    <button class="mt-4 px-6 py-2 bg-primary text-on-primary rounded-lg text-sm font-semibold" (click)="loadData()">Réessayer</button>
+  </div>
+} @else {
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+          <span class="material-symbols-outlined text-amber-600 text-lg">schedule</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-primary">{{ statsEnAttente() }}</p>
+          <p class="text-[10px] text-slate-500 uppercase tracking-widest">En attente/cours</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+          <span class="material-symbols-outlined text-emerald-600 text-lg">task_alt</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-emerald-700">{{ statsSoumises() }}</p>
+          <p class="text-[10px] text-slate-500 uppercase tracking-widest">Soumises</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-emerald-200 flex items-center justify-center">
+          <span class="material-symbols-outlined text-emerald-800 text-lg">verified</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-emerald-800">{{ statsValidees() }}</p>
+          <p class="text-[10px] text-slate-500 uppercase tracking-widest">Validées</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+          <span class="material-symbols-outlined text-red-600 text-lg">cancel</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-red-600">{{ statsRefusees() }}</p>
+          <p class="text-[10px] text-slate-500 uppercase tracking-widest">Refusées</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm mb-6">
+    <div class="flex flex-wrap gap-4 items-center">
+      <div class="relative flex items-center flex-1 min-w-[200px]">
+        <span class="material-symbols-outlined absolute left-3 text-slate-400 text-sm">search</span>
+        <input
+          class="w-full bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 text-xs focus:ring-2 focus:ring-primary/20 transition-all"
+          placeholder="Rechercher par référence, expert..."
+          type="text"
+          [value]="searchTerm()"
+          (input)="onSearch($event)" />
+      </div>
+      <select
+        class="bg-surface-container-low border-none rounded-lg px-4 py-2 text-xs focus:ring-2 focus:ring-primary/20"
+        (change)="onFilterStatut($event)">
+        <option value="">Tous les statuts</option>
+        <option value="EN_ATTENTE">En attente</option>
+        <option value="EN_COURS">En cours</option>
+        <option value="SOUMISE">Soumise</option>
+        <option value="VALIDEE">Validée</option>
+        <option value="REFUSEE">Refusée</option>
+      </select>
+      <button (click)="resetFilters()" class="text-xs text-slate-500 hover:text-primary transition-colors flex items-center gap-1">
+        <span class="material-symbols-outlined text-sm">filter_alt_off</span>Réinitialiser
+      </button>
+    </div>
+  </div>
+
+  <!-- Expertises Table -->
+  @if (filteredExpertises().length === 0) {
+    <div class="bg-surface-container-lowest rounded-xl p-12 text-center shadow-sm">
+      <span class="material-symbols-outlined text-5xl text-slate-300">edit_note</span>
+      <p class="mt-3 text-on-surface-variant">Aucune expertise trouvée</p>
+      @if (filterStatut() || searchTerm()) {
+        <p class="text-xs text-slate-400 mt-1">Essayez de modifier vos filtres</p>
+      } @else {
+        <p class="text-xs text-slate-400 mt-1">Créez une nouvelle demande d'expertise pour commencer</p>
+      }
+    </div>
+  } @else {
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+      <div class="px-6 py-4 border-b border-surface-container-low">
+        <h2 class="text-sm font-bold text-primary uppercase tracking-widest">Expertises ({{ filteredExpertises().length }})</h2>
+      </div>
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-surface-container-low/50">
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Référence</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Expert</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Recommandation</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Montant</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Statut</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Date</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50">
+          @for (exp of filteredExpertises(); track exp.id) {
+            <tr class="hover:bg-slate-50/50 transition-colors">
+              <td class="px-6 py-5 text-sm font-bold text-primary">{{ exp.claimReference }}</td>
+              <td class="px-6 py-5 text-xs text-on-surface-variant font-medium">{{ exp.expertNom || 'Non assigné' }}</td>
+              <td class="px-6 py-5">
+                @if (exp.recommandation) {
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ getRecommandationClass(exp.recommandation) }}">{{ getRecommandationLabel(exp.recommandation) }}</span>
+                } @else {
+                  <span class="text-xs text-slate-400">-</span>
+                }
+              </td>
+              <td class="px-6 py-5 text-xs font-medium text-on-surface">{{ exp.montantEstime ? exp.montantEstime + ' DT' : '-' }}</td>
+              <td class="px-6 py-5">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ getStatutClass(exp.statut) }}">{{ getStatutLabel(exp.statut) }}</span>
+              </td>
+              <td class="px-6 py-5 text-xs text-slate-500">{{ formatDate(exp.createdAt) }}</td>
+              <td class="px-6 py-5 text-right">
+                <div class="flex gap-2 justify-end">
+                  <button (click)="openDetail(exp)" class="px-3 py-1.5 bg-surface-container-low text-on-surface-variant rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-surface-container transition-colors">
+                    <span class="material-symbols-outlined text-xs align-middle mr-1">visibility</span>Voir
+                  </button>
+                  @if (exp.statut === 'SOUMISE') {
+                    <button (click)="validerExpertise(exp.id)" [disabled]="saving()" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-50">Valider</button>
+                    <button (click)="refuserExpertise(exp.id)" [disabled]="saving()" class="px-3 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-50">Refuser</button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+} @* end else *@
+
+<!-- Detail Modal -->
+@if (showDetailModal()) {
+  <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" (click)="closeDetailModal()">
+    <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl" (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="sticky top-0 bg-white border-b border-slate-100 px-8 py-5 flex justify-between items-center z-10">
+        <div>
+          <h2 class="text-lg font-bold text-primary">Détail du rapport</h2>
+          <p class="text-xs text-slate-500">{{ selectedExpertise()?.claimReference }}</p>
+        </div>
+        <button (click)="closeDetailModal()" class="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      @if (success()) {
+        <div class="mx-8 mt-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
+          <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+          <p class="text-sm text-emerald-700 font-medium">{{ success() }}</p>
+        </div>
+      }
+      @if (error()) {
+        <div class="mx-8 mt-6 bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+          <span class="material-symbols-outlined text-red-500">error</span>
+          <p class="text-sm text-red-600 font-medium">{{ error() }}</p>
+        </div>
+      }
+
+      <div class="p-8 space-y-6">
+        <!-- Case Info -->
+        <div class="bg-slate-50 rounded-xl p-5">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Référence</p>
+              <p class="text-sm font-bold text-primary">{{ selectedExpertise()?.claimReference }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Expert</p>
+              <p class="text-sm font-medium text-on-surface">{{ selectedExpertise()?.expertNom || 'Non assigné' }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Statut</p>
+              <p class="text-sm">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ getStatutClass(selectedExpertise()!.statut) }}">{{ getStatutLabel(selectedExpertise()!.statut) }}</span>
+              </p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Date rapport</p>
+              <p class="text-sm text-on-surface">{{ selectedExpertise()?.dateRapport ? formatDateTime(selectedExpertise()!.dateRapport) : 'Non soumis' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Claim Details -->
+        @if (selectedClaim()) {
+          <div class="bg-surface-container-lowest rounded-xl p-5 border border-slate-100">
+            <h3 class="text-sm font-bold text-primary uppercase tracking-widest mb-3">Détails du sinistre</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest">Assuré</p>
+                <p class="text-xs text-on-surface-variant mt-1">{{ selectedClaim()!.assureNom || 'N/A' }}</p>
+              </div>
+              <div>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest">Type</p>
+                <p class="text-xs text-on-surface-variant mt-1">{{ getTypeLabel(selectedClaim()!.type) }}</p>
+              </div>
+              <div>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest">Date du sinistre</p>
+                <p class="text-xs text-on-surface-variant mt-1">{{ formatDate(selectedClaim()!.dateSinistre) }}</p>
+              </div>
+              <div>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest">Lieu</p>
+                <p class="text-xs text-on-surface-variant mt-1">{{ selectedClaim()!.lieu || 'Non renseigné' }}</p>
+              </div>
+              <div class="col-span-2">
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest">Description</p>
+                <p class="text-xs text-on-surface-variant mt-1">{{ selectedClaim()!.description }}</p>
+              </div>
+              <div>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest">Estimation assuré</p>
+                <p class="text-xs text-on-surface-variant mt-1">{{ selectedClaim()!.estimation ? selectedClaim()!.estimation + ' DT' : 'Non renseignée' }}</p>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Conclusion -->
+        <div class="bg-surface-container-lowest rounded-xl p-5 border border-slate-100">
+          <h3 class="text-sm font-bold text-primary uppercase tracking-widest mb-3">Conclusion de l'expertise</h3>
+          @if (selectedExpertise()?.conclusion) {
+            <p class="text-sm text-on-surface-variant leading-relaxed">{{ selectedExpertise()!.conclusion }}</p>
+          } @else {
+            <p class="text-xs text-slate-400 italic">Aucune conclusion rédigée pour le moment</p>
+          }
+        </div>
+
+        <!-- Financial Assessment -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-surface-container-lowest rounded-xl p-5 border border-slate-100">
+            <h3 class="text-sm font-bold text-primary uppercase tracking-widest mb-3">Montant estimé</h3>
+            @if (selectedExpertise()?.montantEstime) {
+              <p class="text-2xl font-bold text-primary">{{ selectedExpertise()!.montantEstime }} <span class="text-sm">DT</span></p>
+            } @else {
+              <p class="text-xs text-slate-400 italic">Non évalué</p>
+            }
+          </div>
+          <div class="bg-surface-container-lowest rounded-xl p-5 border border-slate-100">
+            <h3 class="text-sm font-bold text-primary uppercase tracking-widest mb-3">Recommandation</h3>
+            @if (selectedExpertise()?.recommandation) {
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider {{ getRecommandationClass(selectedExpertise()!.recommandation) }}">{{ getRecommandationLabel(selectedExpertise()!.recommandation) }}</span>
+            } @else {
+              <p class="text-xs text-slate-400 italic">Non formulée</p>
+            }
+          </div>
+        </div>
+
+        <!-- Documents -->
+        <div class="bg-surface-container-lowest rounded-xl p-5 border border-slate-100">
+          <h3 class="text-sm font-bold text-primary uppercase tracking-widest mb-3">Documents joints</h3>
+          @if (selectedExpertise()?.piecesJointes?.length) {
+            <div class="space-y-2">
+              @for (doc of selectedExpertise()!.piecesJointes; track doc) {
+                <div class="flex items-center gap-3 p-3 bg-surface-container-low rounded-lg">
+                  <span class="material-symbols-outlined text-blue-600 text-sm">{{ getFileIcon(doc) }}</span>
+                  <p class="text-xs font-medium text-on-surface flex-1 truncate">{{ doc }}</p>
+                  <button (click)="downloadFile(doc)" class="p-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors inline-flex shrink-0" title="Télécharger">
+                    <span class="material-symbols-outlined text-sm">download</span>
+                  </button>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-xs text-slate-400 text-center py-3">Aucun document joint</p>
+          }
+        </div>
+
+        <!-- Status Timeline -->
+        <div class="bg-surface-container-lowest rounded-xl p-5 border border-slate-100">
+          <h3 class="text-sm font-bold text-primary uppercase tracking-widest mb-3">Avancement</h3>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3">
+              <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+              <span class="text-xs text-on-surface-variant">Expertise demandée</span>
+              <span class="text-[10px] text-slate-400 ml-auto">{{ formatDate(selectedExpertise()?.createdAt) }}</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-3 h-3 rounded-full {{ (selectedExpertise()?.conclusion && selectedExpertise()?.montantEstime) ? 'bg-emerald-500' : 'bg-slate-300' }}"></div>
+              <span class="text-xs {{ (selectedExpertise()?.conclusion && selectedExpertise()?.montantEstime) ? 'text-on-surface-variant' : 'text-slate-400' }}">Rapport rédigé</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-3 h-3 rounded-full {{ (selectedExpertise()?.statut === 'SOUMISE' || selectedExpertise()?.statut === 'VALIDEE' || selectedExpertise()?.statut === 'REFUSEE') ? 'bg-emerald-500' : 'bg-slate-300' }}"></div>
+              <span class="text-xs {{ (selectedExpertise()?.statut === 'SOUMISE' || selectedExpertise()?.statut === 'VALIDEE' || selectedExpertise()?.statut === 'REFUSEE') ? 'text-on-surface-variant' : 'text-slate-400' }}">Rapport soumis</span>
+              @if (selectedExpertise()?.dateRapport) {
+                <span class="text-[10px] text-slate-400 ml-auto">{{ formatDateTime(selectedExpertise()!.dateRapport) }}</span>
+              }
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-3 h-3 rounded-full {{ selectedExpertise()?.statut === 'VALIDEE' ? 'bg-emerald-500' : (selectedExpertise()?.statut === 'REFUSEE' ? 'bg-red-500' : 'bg-slate-300') }}"></div>
+              <span class="text-xs {{ selectedExpertise()?.statut === 'VALIDEE' ? 'text-emerald-700' : (selectedExpertise()?.statut === 'REFUSEE' ? 'text-red-600' : 'text-slate-400') }}">
+                @if (selectedExpertise()?.statut === 'VALIDEE') { Validée } @else if (selectedExpertise()?.statut === 'REFUSEE') { Refusée } @else { Validation gestionnaire }
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        @if (selectedExpertise()?.statut === 'SOUMISE') {
+          <div class="flex gap-3 justify-end pt-2">
+            <button (click)="refuserExpertise(selectedExpertise()!.id)" [disabled]="saving()" class="px-6 py-3 bg-red-500 text-white rounded-lg font-semibold text-sm flex items-center gap-2 hover:opacity-90 transition-all disabled:opacity-50">
+              <span class="material-symbols-outlined text-sm">cancel</span>@if (saving()) { Traitement... } @else { Refuser }
+            </button>
+            <button (click)="validerExpertise(selectedExpertise()!.id)" [disabled]="saving()" class="px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold text-sm flex items-center gap-2 hover:opacity-90 transition-all disabled:opacity-50">
+              <span class="material-symbols-outlined text-sm">verified</span>@if (saving()) { Traitement... } @else { Valider l'expertise }
+            </button>
+          </div>
+        }
+
+        @if (selectedExpertise()?.statut === 'VALIDEE') {
+          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
+            <span class="material-symbols-outlined text-emerald-600">verified</span>
+            <p class="text-sm text-emerald-700 font-medium">Ce rapport a été validé.</p>
+          </div>
+        }
+
+        @if (selectedExpertise()?.statut === 'REFUSEE') {
+          <div class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+            <span class="material-symbols-outlined text-red-500">cancel</span>
+            <p class="text-sm text-red-600 font-medium">Ce rapport a été refusé.</p>
+          </div>
+        }
+
+        @if (selectedExpertise()?.statut === 'EN_ATTENTE' || selectedExpertise()?.statut === 'EN_COURS') {
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
+            <span class="material-symbols-outlined text-amber-600">schedule</span>
+            <p class="text-sm text-amber-700 font-medium">En attente du rapport de l'expert.</p>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Create Expertise Modal -->
+@if (showCreateModal()) {
+  <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" (click)="closeCreateModal()">
+    <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl" (click)="$event.stopPropagation()">
+      <div class="px-8 py-5 border-b border-slate-100 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-bold text-primary">Nouvelle expertise</h2>
+          <p class="text-xs text-slate-500">Sélectionnez un sinistre pour demander une expertise</p>
+        </div>
+        <button (click)="closeCreateModal()" class="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      @if (error()) {
+        <div class="mx-8 mt-6 bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+          <span class="material-symbols-outlined text-red-500">error</span>
+          <p class="text-sm text-red-600 font-medium">{{ error() }}</p>
+        </div>
+      }
+
+      <div class="p-8">
+        @if (claimsWithoutExpertise().length === 0) {
+          <div class="text-center py-8">
+            <span class="material-symbols-outlined text-4xl text-slate-300">folder_off</span>
+            <p class="mt-3 text-sm text-on-surface-variant">Aucun sinistre disponible pour une expertise</p>
+            <p class="text-xs text-slate-400 mt-1">Tous les sinistres assignés ont déjà une expertise en cours</p>
+          </div>
+        } @else {
+          <div class="space-y-3 mb-6 max-h-80 overflow-y-auto">
+            @for (claim of claimsWithoutExpertise(); track claim.id) {
+              <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all"
+                     [class.border-primary]="selectedClaimIdForExpertise() === claim.id"
+                     [class.bg-primary/5]="selectedClaimIdForExpertise() === claim.id"
+                     [class.border-outline-variant/20]="selectedClaimIdForExpertise() !== claim.id">
+                <input type="radio" name="claim" [value]="claim.id"
+                       [checked]="selectedClaimIdForExpertise() === claim.id"
+                       (change)="selectedClaimIdForExpertise.set(claim.id)"
+                       class="accent-primary" />
+                <div class="flex-1">
+                  <p class="text-sm font-semibold text-primary">#{{ claim.id.substring(0, 8) }}</p>
+                  <p class="text-[10px] text-slate-500">{{ getTypeLabel(claim.type) }} - {{ claim.assureNom }}</p>
+                </div>
+                @if (claim.expertId) {
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-100 text-blue-700">Expert assigné</span>
+                }
+              </label>
+            }
+          </div>
+
+          <div class="flex gap-3 justify-end">
+            <button (click)="closeCreateModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-all">Annuler</button>
+            <button (click)="confirmCreateExpertise()" [disabled]="!selectedClaimIdForExpertise() || saving()"
+                    class="px-6 py-2 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+              @if (saving()) { Création... } @else { Créer l'expertise }
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}

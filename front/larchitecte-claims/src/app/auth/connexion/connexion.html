@@ -1,0 +1,96 @@
+<body class="bg-surface text-on-surface min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+  <!-- Decorative Texture Background -->
+  <div class="absolute inset-0 z-0 pointer-events-none opacity-40">
+    <div class="absolute top-[-10%] right-[-10%] w-[40%] h-[60%] bg-gradient-to-br from-primary-fixed to-transparent rounded-full blur-[120px]"></div>
+    <div class="absolute bottom-[-10%] left-[-10%] w-[40%] h-[60%] bg-gradient-to-tr from-secondary-container to-transparent rounded-full blur-[120px]"></div>
+  </div>
+  <!-- Main Login Container -->
+  <main class="relative z-10 w-full max-w-[440px]">
+    <!-- Login Card -->
+    <div class="bg-surface-container-lowest editorial-shadow rounded-xl p-10 md:p-12 border border-outline-variant/10">
+      <!-- Brand Anchor -->
+      <div class="flex flex-col items-center mb-10 text-center">
+        <div class="w-14 h-14 bg-primary rounded-xl flex items-center justify-center mb-4 text-on-primary shadow-lg shadow-primary/20">
+          <span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">shield</span>
+        </div>
+        <h1 class="text-2xl font-extrabold tracking-tight text-primary">L'Architecte</h1>
+        <p class="text-on-surface-variant text-sm uppercase tracking-wider mt-1 opacity-70">L'Assureur Modèle</p>
+      </div>
+      <!-- Error Message -->
+      @if (errorMessage) {
+        <div class="mb-6 p-3 bg-error-container/10 border border-error/20 rounded-lg flex items-center gap-3">
+          <span class="material-symbols-outlined text-error text-[20px]">error</span>
+          <span class="text-error text-sm font-medium">{{ errorMessage }}</span>
+        </div>
+      }
+      <!-- Form -->
+      <form class="space-y-6" (ngSubmit)="onSubmit()" #loginForm="ngForm">
+        <!-- Email Field -->
+        <div class="space-y-1.5">
+          <label class="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant ml-1" for="email">Adresse Email</label>
+          <div class="input-focus-ring group relative bg-surface-container-low rounded-lg transition-all duration-200">
+            <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-on-surface-variant/40 group-focus-within:text-primary transition-colors">
+              <span class="material-symbols-outlined text-[20px]">alternate_email</span>
+            </div>
+            <input class="block w-full bg-transparent border-0 pl-12 pr-4 py-3.5 text-on-surface placeholder:text-outline-variant focus:ring-0 text-base" id="email" name="email" placeholder="nom@exemple.fr" type="email" [(ngModel)]="email" />
+          </div>
+        </div>
+        <!-- Password Field -->
+        <div class="space-y-1.5">
+          <label class="block text-[11px] font-bold uppercase tracking-widest text-on-surface-variant ml-1" for="password">Mot de passe</label>
+          <div class="input-focus-ring group relative bg-surface-container-low rounded-lg transition-all duration-200">
+            <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-on-surface-variant/40 group-focus-within:text-primary transition-colors">
+              <span class="material-symbols-outlined text-[20px]">lock</span>
+            </div>
+            <input class="block w-full bg-transparent border-0 pl-12 pr-12 py-3.5 text-on-surface placeholder:text-outline-variant focus:ring-0 text-base" id="password" name="password" placeholder="Votre mot de passe" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" />
+            <button class="absolute inset-y-0 right-4 flex items-center text-on-surface-variant/40 hover:text-on-surface transition-colors" type="button" (click)="togglePasswordVisibility()">
+              <span class="material-symbols-outlined text-[20px]">{{ showPassword ? 'visibility' : 'visibility_off' }}</span>
+            </button>
+          </div>
+        </div>
+        <!-- Primary CTA -->
+        <div class="pt-4">
+          <button class="w-full py-4 px-6 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold rounded-lg shadow-lg shadow-primary/10 hover:opacity-95 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2" type="submit" [disabled]="isLoading">
+            @if (isLoading) {
+              <span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+              <span>Connexion en cours...</span>
+            } @else {
+              <span>Se connecter</span>
+              <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+            }
+          </button>
+        </div>
+      </form>
+      <!-- Footer Elements -->
+      <div class="mt-10 pt-8 border-t border-surface-container-high text-center">
+        <p class="text-on-surface-variant text-sm">
+          Pas encore de compte ?
+          <a class="text-primary font-semibold hover:underline decoration-2 underline-offset-4 ml-1" routerLink="/auth/inscription">Créer un dossier</a>
+        </p>
+      </div>
+    </div>
+    <!-- System Status -->
+    <div class="mt-8 flex justify-between items-center px-4">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Services en ligne : Opérationnels</span>
+      </div>
+      <div class="flex gap-4">
+        <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60 hover:text-primary cursor-pointer">Aide</span>
+        <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60 hover:text-primary cursor-pointer">Confidentialité</span>
+      </div>
+    </div>
+  </main>
+  <!-- Background Physicality Element -->
+  <div class="fixed bottom-12 right-12 hidden lg:block">
+    <div class="bg-surface-container-lowest editorial-shadow rounded-xl p-4 flex items-center gap-4 max-w-[280px]">
+      <div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">
+        <span class="material-symbols-outlined text-primary">verified_user</span>
+      </div>
+      <div>
+        <p class="text-[11px] font-bold uppercase tracking-wider text-primary">Accès Sécurisé</p>
+        <p class="text-xs text-on-surface-variant leading-tight">Chiffrement AES-256 de niveau bancaire activé.</p>
+      </div>
+    </div>
+  </div>
+</body>

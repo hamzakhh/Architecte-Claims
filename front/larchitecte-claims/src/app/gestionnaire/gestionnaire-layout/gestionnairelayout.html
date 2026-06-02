@@ -1,0 +1,91 @@
+﻿<!-- SideNavBar -->
+<aside class="h-screen w-72 fixed left-0 top-0 flex flex-col py-6 border-r border-slate-100 bg-slate-50 text-sm font-medium tracking-wide z-50">
+  <div class="px-8 mb-10">
+    <h1 class="text-lg font-black text-blue-900 uppercase tracking-widest">L'Architecte</h1>
+    <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-widest">Gestionnaire d'Assurance</p>
+  </div>
+  <div class="px-6 mb-8">
+    <div class="flex items-center gap-3 p-3 bg-white rounded-xl shadow-sm">
+      <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center"><span class="material-symbols-outlined text-primary">person</span></div>
+      <div><p class="text-blue-900 font-bold">{{ auth.userName() }}</p><p class="text-[10px] text-slate-500 uppercase tracking-tighter">Gestionnaire</p></div>
+    </div>
+  </div>
+  <nav class="flex-1 space-y-1 px-4 overflow-y-auto">
+    <!-- 2.2.5 Tableau de bord -->
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/gestionnaire/tableau-de-bord" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">dashboard</span><span>Tableau de bord</span>
+    </a>
+
+    <!-- 2.2.1 Réception & Qualification -->
+    <p class="px-4 pt-4 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Réception & Qualification</p>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/gestionnaire/tous-sinistres" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">description</span><span>Tous les sinistres</span>
+    </a>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/gestionnaire/dossiers-assignes" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">folder_copy</span><span>Dossiers assignés</span>
+    </a>
+
+    <!-- 2.2.4 Décision & Indemnisation -->
+    <p class="px-4 pt-4 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Décision & Indemnisation</p>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/gestionnaire/remboursements" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">payments</span><span>Indemnisation</span>
+    </a>
+
+    <!-- 1.3 Évaluation & Approbation -->
+    <p class="px-4 pt-4 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Évaluation & Approbation</p>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/gestionnaire/analyse-ia" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">psychology</span><span>Analyse IA</span>
+    </a>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/gestionnaire/approbation" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">gavel</span><span>Approbation</span>
+    </a>
+
+    <!-- 2.2.3 Coordination Experts -->
+    <p class="px-4 pt-4 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Coordination Experts</p>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/gestionnaire/rapports" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">analytics</span><span>Rapports expertise</span>
+    </a>
+
+    <!-- 2.2.2 Signalement Fraude -->
+    <p class="px-4 pt-4 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Signalement Fraude</p>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/gestionnaire/signalement-fraude" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">flag</span><span>Signalement fraude</span>
+    </a>
+
+    <!-- Communication -->
+    <p class="px-4 pt-4 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Communication</p>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/gestionnaire/messagerie" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">chat_bubble</span><span>Messagerie</span>
+    </a>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/gestionnaire/support" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">support_agent</span><span>Support</span>
+    </a>
+
+    <!-- Compte -->
+    <p class="px-4 pt-4 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Compte</p>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/gestionnaire/profil" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">account_circle</span><span>Profil</span>
+    </a>
+  </nav>
+  <div class="px-4 pt-2 border-t border-slate-100">
+    <button class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors w-full text-left" (click)="logout()">
+      <span class="material-symbols-outlined">logout</span><span>Déconnexion</span>
+    </button>
+  </div>
+</aside>
+<!-- Main Wrapper -->
+<main class="pl-72 min-h-screen flex flex-col">
+  <header class="w-full sticky top-0 z-40 bg-white/80 backdrop-blur-md flex justify-between items-center px-8 h-16 shadow-sm shadow-blue-900/5">
+    <div class="flex items-center gap-6">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-blue-900">Gestion des Sinistres</h2>
+      <div class="relative flex items-center"><span class="material-symbols-outlined absolute left-3 text-slate-400 text-sm">search</span><input class="bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-1.5 text-xs focus:ring-2 focus:ring-primary/20 w-64 transition-all" placeholder="Rechercher un dossier..." type="text" /></div>
+    </div>
+    <div class="flex items-center gap-4">
+      <app-notification-bell />
+      <div class="flex items-center gap-3 pl-4 border-l border-slate-100">
+        <div class="text-right"><p class="text-xs font-bold text-primary">{{ auth.userName() }}</p><p class="text-[10px] text-slate-500 uppercase tracking-tighter">Gestionnaire</p></div>
+      </div>
+    </div>
+  </header>
+  <div class="flex-1 p-8"><router-outlet /></div>
+</main>

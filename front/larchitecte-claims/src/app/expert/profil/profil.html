@@ -1,0 +1,223 @@
+﻿<div class="mb-10">
+  <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Mon Profil</h1>
+  <p class="text-on-surface-variant mt-1">Gérez vos informations professionnelles et expertises.</p>
+</div>
+
+@if (success()) {
+  <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-emerald-700 text-sm mb-6 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">check_circle</span>
+    {{ success() }}
+  </div>
+}
+
+@if (loading()) {
+  <div class="flex items-center justify-center py-20">
+    <span class="material-symbols-outlined animate-spin text-4xl text-primary">progress_activity</span>
+    <span class="ml-3 text-on-surface-variant">Chargement...</span>
+  </div>
+} @else if (error() && !profile()) {
+  <div class="bg-error-container/20 border border-error-container rounded-xl p-6 text-center">
+    <span class="material-symbols-outlined text-error text-3xl">error</span>
+    <p class="text-error mt-2">{{ error() }}</p>
+    <button class="mt-4 px-6 py-2 bg-primary text-on-primary rounded-lg text-sm font-semibold" (click)="loadProfile()">Réessayer</button>
+  </div>
+} @else if (profile()) {
+
+<div class="max-w-4xl grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <!-- Avatar & Summary -->
+  <div class="bg-surface-container-lowest rounded-xl p-8 shadow-sm flex flex-col items-center">
+    <div class="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+      <span class="material-symbols-outlined text-primary text-4xl">engineering</span>
+    </div>
+    <h2 class="text-lg font-bold text-primary">{{ profile()!.fullName }}</h2>
+    <p class="text-xs text-slate-500 uppercase tracking-widest mt-1">{{ getRoleLabel(profile()!.role) }}</p>
+    <div class="mt-4 flex gap-2">
+      @if (profile()!.enabled) {
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-100 text-emerald-700">Actif</span>
+      } @else {
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-red-100 text-red-700">Inactif</span>
+      }
+    </div>
+    <div class="mt-6 w-full space-y-3">
+      <div class="flex justify-between text-xs"><span class="text-on-surface-variant">Dossiers en cours</span><span class="font-bold text-primary">{{ expertisesEnCours() }}</span></div>
+      <div class="flex justify-between text-xs"><span class="text-on-surface-variant">Rapports rendus</span><span class="font-bold text-emerald-600">{{ expertisesCompletees() }}</span></div>
+      <div class="flex justify-between text-xs"><span class="text-on-surface-variant">Total missions</span><span class="font-bold text-primary">{{ totalExpertises() }}</span></div>
+      <div class="flex justify-between text-xs"><span class="text-on-surface-variant">Taux de complétion</span><span class="font-bold text-emerald-600">{{ getCompletionRate() }}</span></div>
+    </div>
+    <div class="mt-6 w-full space-y-2">
+      <p class="text-[10px] text-slate-400 uppercase tracking-widest">Membre depuis</p>
+      <p class="text-xs text-on-surface-variant">{{ formatDate(profile()!.createdAt) }}</p>
+    </div>
+    <button (click)="openPasswordModal()" class="mt-4 text-xs font-bold text-primary hover:text-on-tertiary-container transition-colors uppercase tracking-widest">
+      <span class="material-symbols-outlined text-xs align-middle mr-1">lock</span>Changer le mot de passe
+    </button>
+  </div>
+
+  <!-- Form -->
+  <div class="lg:col-span-2 space-y-6">
+    <div class="bg-surface-container-lowest rounded-xl p-8 shadow-sm">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-sm font-bold text-primary uppercase tracking-widest">Informations professionnelles</h2>
+        @if (!editing()) {
+          <button (click)="startEditing()" class="px-4 py-2 bg-primary/10 text-primary rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-primary/20 transition-all">
+            <span class="material-symbols-outlined text-xs align-middle mr-1">edit</span>Modifier
+          </button>
+        }
+      </div>
+
+      @if (error()) {
+        <div class="bg-error-container/20 border border-error-container rounded-xl p-4 mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-error text-sm">error</span>
+          <p class="text-xs text-error">{{ error() }}</p>
+        </div>
+      }
+
+      @if (editing()) {
+        <form class="space-y-5" (ngSubmit)="saveProfile()">
+          <div class="grid grid-cols-2 gap-5">
+            <div class="space-y-1.5">
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Prénom *</label>
+              <input [ngModel]="editPrenom()" (ngModelChange)="editPrenom.set($event)" name="prenom"
+                     class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg text-on-surface text-sm focus:ring-2 focus:ring-primary/20" type="text" required />
+            </div>
+            <div class="space-y-1.5">
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Nom *</label>
+              <input [ngModel]="editNom()" (ngModelChange)="editNom.set($event)" name="nom"
+                     class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg text-on-surface text-sm focus:ring-2 focus:ring-primary/20" type="text" required />
+            </div>
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Email *</label>
+            <input [ngModel]="editEmail()" (ngModelChange)="editEmail.set($event)" name="email"
+                   class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg text-on-surface text-sm focus:ring-2 focus:ring-primary/20" type="email" required />
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Téléphone</label>
+            <input [ngModel]="editTelephone()" (ngModelChange)="editTelephone.set($event)" name="telephone"
+                   class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg text-on-surface text-sm focus:ring-2 focus:ring-primary/20" type="tel" />
+          </div>
+          <div class="pt-4 flex gap-3">
+            <button type="submit" [disabled]="saving() || !editPrenom() || !editNom() || !editEmail()"
+                    class="bg-primary text-on-primary px-8 py-3 rounded-lg font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-2">
+              @if (saving()) {
+                <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+              }
+              Enregistrer
+            </button>
+            <button type="button" (click)="cancelEditing()"
+                    class="bg-surface-container-low text-on-surface-variant px-6 py-3 rounded-lg font-semibold text-sm hover:bg-surface-container transition-colors">
+              Annuler
+            </button>
+          </div>
+        </form>
+      } @else {
+        <div class="space-y-5">
+          <div class="grid grid-cols-2 gap-5">
+            <div>
+              <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Prénom</p>
+              <p class="text-sm font-medium text-on-surface">{{ profile()!.prenom }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Nom</p>
+              <p class="text-sm font-medium text-on-surface">{{ profile()!.nom }}</p>
+            </div>
+          </div>
+          <div>
+            <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Email</p>
+            <p class="text-sm font-medium text-on-surface">{{ profile()!.email }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Téléphone</p>
+            <p class="text-sm font-medium text-on-surface">{{ profile()!.telephone || 'Non renseigné' }}</p>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Account Info -->
+    <div class="bg-surface-container-lowest rounded-xl p-8 shadow-sm">
+      <h2 class="text-sm font-bold text-primary uppercase tracking-widest mb-4">Informations du compte</h2>
+      <div class="space-y-3">
+        <div class="flex items-center gap-3 p-3 bg-surface-container-low rounded-lg">
+          <span class="material-symbols-outlined text-primary text-sm">badge</span>
+          <div class="flex-1">
+            <p class="text-xs font-medium text-on-surface">Rôle</p>
+            <p class="text-[10px] text-slate-400">{{ getRoleLabel(profile()!.role) }}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 p-3 bg-surface-container-low rounded-lg">
+          <span class="material-symbols-outlined text-emerald-600 text-sm">verified</span>
+          <div class="flex-1">
+            <p class="text-xs font-medium text-on-surface">Statut du compte</p>
+            <p class="text-[10px] text-slate-400">{{ profile()!.enabled ? 'Compte actif' : 'Compte désactivé' }}</p>
+          </div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase {{ profile()!.enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700' }}">
+            {{ profile()!.enabled ? 'Actif' : 'Inactif' }}
+          </span>
+        </div>
+        <div class="flex items-center gap-3 p-3 bg-surface-container-low rounded-lg">
+          <span class="material-symbols-outlined text-blue-600 text-sm">calendar_today</span>
+          <div class="flex-1">
+            <p class="text-xs font-medium text-on-surface">Date de création</p>
+            <p class="text-[10px] text-slate-400">{{ formatDate(profile()!.createdAt) }}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 p-3 bg-surface-container-low rounded-lg">
+          <span class="material-symbols-outlined text-amber-600 text-sm">update</span>
+          <div class="flex-1">
+            <p class="text-xs font-medium text-on-surface">Dernière mise à jour</p>
+            <p class="text-[10px] text-slate-400">{{ formatDate(profile()!.updatedAt) }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+}
+
+<!-- Password Modal -->
+@if (showPasswordModal()) {
+  <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" (click)="closePasswordModal()">
+    <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl" (click)="$event.stopPropagation()">
+      <h2 class="text-lg font-bold text-primary mb-2">Changer le mot de passe</h2>
+      <p class="text-xs text-on-surface-variant mb-6">Entrez votre mot de passe actuel et le nouveau.</p>
+
+      @if (passwordError()) {
+        <div class="bg-error-container/20 border border-error-container rounded-xl p-3 mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-error text-sm">error</span>
+          <p class="text-xs text-error">{{ passwordError() }}</p>
+        </div>
+      }
+
+      <div class="space-y-4">
+        <div>
+          <label class="text-[10px] text-slate-500 uppercase tracking-widest mb-1 block">Mot de passe actuel *</label>
+          <input type="password" [ngModel]="currentPassword()" (ngModelChange)="currentPassword.set($event)"
+                 class="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-xs focus:ring-2 focus:ring-primary/20" />
+        </div>
+        <div>
+          <label class="text-[10px] text-slate-500 uppercase tracking-widest mb-1 block">Nouveau mot de passe *</label>
+          <input type="password" [ngModel]="newPassword()" (ngModelChange)="newPassword.set($event)"
+                 class="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-xs focus:ring-2 focus:ring-primary/20" />
+        </div>
+        <div>
+          <label class="text-[10px] text-slate-500 uppercase tracking-widest mb-1 block">Confirmer le mot de passe *</label>
+          <input type="password" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)"
+                 class="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-xs focus:ring-2 focus:ring-primary/20" />
+        </div>
+      </div>
+
+      <div class="flex gap-3 justify-end mt-6">
+        <button (click)="closePasswordModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-all">Annuler</button>
+        <button (click)="changePassword()" [disabled]="passwordSaving() || !currentPassword() || !newPassword() || !confirmPassword()"
+                class="px-6 py-2 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+          @if (passwordSaving()) {
+            <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+          }
+          Changer
+        </button>
+      </div>
+    </div>
+  </div>
+}

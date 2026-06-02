@@ -1,0 +1,9 @@
+{
+  "prenom": "Admin",
+  "nom": "System",
+  "email": "admin@larchitecte.com",
+  "password": "admin123",
+  "telephone": "+33123456789",
+  "role": "ADMIN",
+  "enabled": true
+}

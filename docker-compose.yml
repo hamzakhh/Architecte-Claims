@@ -1,0 +1,44 @@
+services:
+  # ---- MongoDB ----
+  mongodb:
+    image: mongo:8
+    container_name: larchitecte-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+
+  # ---- Backend (Spring Boot) ----
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: larchitecte-backend
+    ports:
+      - "8081:8080"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/larchitecte_claims
+      - OLLAMA_API_URL=http://host.docker.internal:11434/api/chat
+      - FRONTEND_URL=http://localhost
+    volumes:
+      - uploads-data:/app/uploads
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  # ---- Frontend (Angular + Nginx) ----
+  frontend:
+    build:
+      context: ./front/larchitecte-claims
+      dockerfile: Dockerfile
+    container_name: larchitecte-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+  uploads-data:

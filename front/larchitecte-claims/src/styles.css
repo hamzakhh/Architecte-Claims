@@ -1,0 +1,246 @@
+@import "tailwindcss";
+
+@theme {
+  --color-secondary-fixed-dim: #ffb690;
+  --color-surface-container-low: #f0f4f8;
+  --color-primary: #022448;
+  --color-on-error: #ffffff;
+  --color-on-surface-variant: #43474e;
+  --color-outline-variant: #c4c6cf;
+  --color-inverse-on-surface: #edf1f5;
+  --color-surface-container-lowest: #ffffff;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #8aa4cf;
+  --color-on-tertiary-fixed-variant: #60410c;
+  --color-secondary-container: #fd761a;
+  --color-on-tertiary-fixed: #291800;
+  --color-surface-container: #eaeef2;
+  --color-inverse-primary: #adc8f5;
+  --color-secondary: #9d4300;
+  --color-tertiary-fixed-dim: #edbf7f;
+  --color-outline: #74777f;
+  --color-primary-fixed: #d5e3ff;
+  --color-error: #ba1a1a;
+  --color-surface: #f6fafe;
+  --color-on-error-container: #93000a;
+  --color-surface-tint: #455f87;
+  --color-surface-dim: #d6dade;
+  --color-on-tertiary: #ffffff;
+  --color-surface-variant: #dfe3e7;
+  --color-surface-container-highest: #dfe3e7;
+  --color-error-container: #ffdad6;
+  --color-inverse-surface: #2c3134;
+  --color-on-primary-fixed-variant: #2d486d;
+  --color-on-secondary-fixed-variant: #783200;
+  --color-tertiary-container: #503300;
+  --color-surface-container-high: #e4e9ed;
+  --color-on-tertiary-container: #c69b5f;
+  --color-on-primary-fixed: #001c3b;
+  --color-on-background: #171c1f;
+  --color-tertiary-fixed: #ffddb2;
+  --color-background: #f6fafe;
+  --color-on-secondary-container: #5c2400;
+  --color-primary-container: #1e3a5f;
+  --color-on-surface: #171c1f;
+  --color-surface-bright: #f6fafe;
+  --color-tertiary: #341f00;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-fixed: #341100;
+  --color-secondary-fixed: #ffdbca;
+  --color-primary-fixed-dim: #adc8f5;
+  --color-admin-accent: #ff8031;
+  --color-assure-accent: #fd761a;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.glass-panel {
+  background: rgba(240, 244, 248, 0.8);
+  backdrop-filter: blur(24px);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.editorial-shadow {
+  box-shadow: 0px 20px 40px rgba(2, 36, 72, 0.06);
+}
+
+.input-focus-ring:focus-within {
+  box-shadow: 0 0 0 2px rgba(2, 36, 72, 0.1);
+}
+
+/* Multi-step claim form styles */
+.step-content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Progress indicator styles */
+.progress-step {
+  transition: all 0.3s ease;
+}
+
+.progress-step.active {
+  color: var(--color-primary);
+}
+
+.progress-step.completed {
+  color: var(--color-primary);
+}
+
+/* File upload area */
+.file-upload-area {
+  border: 2px dashed var(--color-outline-variant);
+  transition: all 0.3s ease;
+}
+
+.file-upload-area:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-surface-container-low);
+}
+
+.file-upload-area.dragover {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-container);
+}
+
+/* File item styles */
+.file-item {
+  transition: all 0.2s ease;
+}
+
+.file-item:hover {
+  background-color: var(--color-surface-container);
+  transform: translateX(2px);
+}
+
+/* Map container */
+.map-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.map-container .map-controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+}
+
+.map-controls button {
+  background: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.map-controls button:hover {
+  background-color: var(--color-surface-container-low);
+}
+
+/* Form input enhancements */
+.form-input {
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(2, 36, 72, 0.1);
+}
+
+/* Button styles */
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(2, 36, 72, 0.2);
+}
+
+.btn-secondary {
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface-variant);
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--color-surface-container);
+  transform: translateY(-1px);
+}
+
+/* Summary section styles */
+.summary-section {
+  background: var(--color-surface-container-low);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.summary-section h3 {
+  color: var(--color-primary);
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-outline-variant/30);
+}
+
+.summary-item:last-child {
+  border-bottom: none;
+}
+
+/* Checkbox custom styling */
+.custom-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .progress-indicator {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .progress-step {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .summary-section {
+    padding: 16px;
+  }
+}

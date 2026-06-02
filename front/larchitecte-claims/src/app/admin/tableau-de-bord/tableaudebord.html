@@ -1,0 +1,236 @@
+﻿<div class="mb-10">
+  <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Tableau de Bord Administration</h1>
+  <p class="text-on-surface-variant mt-1">Vue d'ensemble du système, KPIs et supervision globale.</p>
+</div>
+
+<!-- Loading -->
+@if (loading()) {
+  <div class="flex items-center justify-center py-20">
+    <span class="material-symbols-outlined animate-spin text-4xl text-primary">progress_activity</span>
+    <span class="ml-3 text-on-surface-variant">Chargement des statistiques...</span>
+  </div>
+}
+
+<!-- Error -->
+@if (error()) {
+  <div class="bg-error-container text-on-error-container p-4 rounded-xl mb-6">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined">error</span>
+      <span class="text-sm font-medium">{{ error() }}</span>
+    </div>
+  </div>
+}
+
+@if (!loading() && stats()) {
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+      <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Utilisateurs actifs</span>
+      <h3 class="text-[2.75rem] font-bold text-primary tracking-tighter mt-2">{{ formatNumber(stats()!.utilisateursActifs) }}</h3>
+      <div class="mt-4 flex items-center text-xs text-on-surface-variant font-semibold">
+        <span class="material-symbols-outlined text-sm mr-1">group</span>{{ formatNumber(stats()!.totalUtilisateurs) }} total
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+      <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Sinistres ouverts</span>
+      <h3 class="text-[2.75rem] font-bold text-amber-600 tracking-tighter mt-2">{{ formatNumber(stats()!.sinistresEnCours) }}</h3>
+      <div class="mt-4 flex items-center text-xs text-amber-600 font-semibold">
+        <span class="material-symbols-outlined text-sm mr-1">pending</span>{{ formatNumber(stats()!.sinistresCeMois) }} ce mois
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+      <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Taux de résolution</span>
+      <h3 class="text-[2.75rem] font-bold text-emerald-600 tracking-tighter mt-2">{{ tauxResolution() }}%</h3>
+      <div class="mt-4 flex items-center text-xs text-emerald-600 font-semibold uppercase tracking-widest">Clôturés / Total</div>
+    </div>
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+      <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Coût moyen</span>
+      <h3 class="text-[2.75rem] font-bold text-on-tertiary-container tracking-tighter mt-2">{{ coutMoyen() }}</h3>
+      <div class="mt-4 flex items-center text-xs text-on-tertiary-container font-semibold uppercase tracking-widest">Par sinistre</div>
+    </div>
+  </div>
+
+  <!-- SLA Alerts -->
+  @if (slaAlerts().length > 0) {
+    <div class="bg-error-container/30 border border-error/20 p-4 rounded-xl mb-6">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="material-symbols-outlined text-error text-sm">warning</span>
+        <h2 class="text-xs font-bold text-error uppercase tracking-widest">Alertes SLA — Dépassement de délai</h2>
+        <span class="ml-auto text-xs font-bold text-error">{{ slaAlerts().length }} dossiers</span>
+      </div>
+      <div class="space-y-2">
+        @for (claim of slaAlerts().slice(0, 3); track claim.id) {
+          <div class="flex items-center justify-between p-3 bg-white rounded-lg">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-error text-sm">schedule</span>
+              <div>
+                <p class="text-xs font-bold text-on-surface">{{ getTypeLabel(claim.type) }} — {{ claim.assureNom || '—' }}</p>
+                <p class="text-[10px] text-slate-400">Déclaré le {{ formatDate(claim.createdAt) }}</p>
+              </div>
+            </div>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700">{{ getStatutLabel(claim.statut) }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Section Tabs -->
+  <div class="flex gap-2 mb-6">
+    <button (click)="setActiveSection('overview')" class="px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all {{ activeSection() === 'overview' ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container' }}">
+      <span class="material-symbols-outlined text-sm align-middle mr-1">dashboard</span>Vue d'ensemble
+    </button>
+    <button (click)="setActiveSection('workload')" class="px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all {{ activeSection() === 'workload' ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container' }}">
+      <span class="material-symbols-outlined text-sm align-middle mr-1">workload</span>Charge de travail
+    </button>
+    <button (click)="setActiveSection('audit')" class="px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all {{ activeSection() === 'audit' ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container' }}">
+      <span class="material-symbols-outlined text-sm align-middle mr-1">history</span>Journal d'audit
+    </button>
+  </div>
+
+  <!-- Overview Section -->
+  @if (activeSection() === 'overview') {
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <!-- Role Distribution -->
+      <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-surface-container-low flex justify-between items-center">
+          <h2 class="text-sm font-bold text-primary uppercase tracking-widest">Répartition des rôles</h2>
+          <a routerLink="/admin/utilisateurs" class="text-xs font-bold text-primary hover:text-on-tertiary-container transition-colors tracking-widest">Gérer</a>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-primary"></div><span class="text-sm font-medium text-on-surface">Assurés</span></div>
+            <div class="flex items-center gap-2"><span class="text-sm font-bold text-primary">{{ formatNumber(stats()!.totalAssures) }}</span><div class="w-24 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-primary rounded-full" [style.width.%]="stats()!.totalUtilisateurs ? (stats()!.totalAssures / stats()!.totalUtilisateurs * 100) : 0"></div></div></div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-amber-500"></div><span class="text-sm font-medium text-on-surface">Experts</span></div>
+            <div class="flex items-center gap-2"><span class="text-sm font-bold text-amber-600">{{ formatNumber(stats()!.totalExperts) }}</span><div class="w-24 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-amber-500 rounded-full" [style.width.%]="stats()!.totalUtilisateurs ? (stats()!.totalExperts / stats()!.totalUtilisateurs * 100) : 0"></div></div></div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-emerald-500"></div><span class="text-sm font-medium text-on-surface">Gestionnaires</span></div>
+            <div class="flex items-center gap-2"><span class="text-sm font-bold text-emerald-600">{{ formatNumber(stats()!.totalGestionnaires) }}</span><div class="w-24 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-emerald-500 rounded-full" [style.width.%]="stats()!.totalUtilisateurs ? (stats()!.totalGestionnaires / stats()!.totalUtilisateurs * 100) : 0"></div></div></div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-blue-500"></div><span class="text-sm font-medium text-on-surface">Administrateurs</span></div>
+            <div class="flex items-center gap-2"><span class="text-sm font-bold text-blue-600">{{ formatNumber(stats()!.totalAdmins) }}</span><div class="w-24 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-blue-500 rounded-full" [style.width.%]="stats()!.totalUtilisateurs ? (stats()!.totalAdmins / stats()!.totalUtilisateurs * 100) : 0"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Experts Overview -->
+      <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-surface-container-low flex justify-between items-center">
+          <h2 class="text-sm font-bold text-primary uppercase tracking-widest">Experts</h2>
+          <a routerLink="/admin/experts" class="text-xs font-bold text-primary hover:text-on-tertiary-container transition-colors tracking-widest">Gérer</a>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-primary/5 p-4 rounded-xl text-center"><span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total</span><p class="text-2xl font-bold text-primary mt-1">{{ formatNumber(stats()!.totalExperts) }}</p></div>
+            <div class="bg-emerald-50 p-4 rounded-xl text-center"><span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Disponibles</span><p class="text-2xl font-bold text-emerald-600 mt-1">{{ formatNumber(stats()!.expertsDisponibles) }}</p></div>
+            <div class="bg-amber-50 p-4 rounded-xl text-center"><span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Expertises</span><p class="text-2xl font-bold text-amber-600 mt-1">{{ formatNumber(stats()!.expertisesEnCours) }}</p></div>
+            <div class="bg-slate-50 p-4 rounded-xl text-center"><span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Clôturés</span><p class="text-2xl font-bold text-slate-500 mt-1">{{ formatNumber(stats()!.sinistresClotures) }}</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Claims -->
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+      <div class="px-6 py-4 border-b border-surface-container-low flex justify-between items-center">
+        <h2 class="text-sm font-bold text-primary uppercase tracking-widest">Sinistres récents</h2>
+        <a routerLink="/admin/rapports" class="text-xs font-bold text-primary hover:text-on-tertiary-container transition-colors tracking-widest">Voir les rapports</a>
+      </div>
+      @if (recentClaims().length === 0) {
+        <div class="p-10 text-center text-on-surface-variant"><span class="material-symbols-outlined text-4xl mb-2">inbox</span><p class="text-sm">Aucun sinistre récent</p></div>
+      } @else {
+        <table class="w-full text-left border-collapse">
+          <thead><tr class="bg-surface-container-low/50">
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Type</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Assuré</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Description</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Date</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Statut</th>
+          </tr></thead>
+          <tbody class="divide-y divide-slate-50">
+            @for (claim of recentClaims().slice(0, 5); track claim.id) {
+              <tr class="hover:bg-slate-50/50 transition-colors">
+                <td class="px-6 py-5 text-sm font-bold text-primary">{{ getTypeLabel(claim.type) }}</td>
+                <td class="px-6 py-5 text-xs text-on-surface-variant font-medium">{{ claim.assureNom || '—' }}</td>
+                <td class="px-6 py-5 text-xs text-on-surface-variant max-w-50 truncate">{{ claim.description }}</td>
+                <td class="px-6 py-5 text-xs text-slate-500">{{ formatDate(claim.createdAt) }}</td>
+                <td class="px-6 py-5 text-right"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ getStatutClass(claim.statut) }}">{{ getStatutLabel(claim.statut) }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  }
+
+  <!-- Workload Section -->
+  @if (activeSection() === 'workload') {
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+      <div class="px-6 py-4 border-b border-surface-container-low">
+        <h2 class="text-sm font-bold text-primary uppercase tracking-widest">Charge de travail par agent</h2>
+      </div>
+      @if (workload().length === 0) {
+        <div class="p-10 text-center text-on-surface-variant"><span class="material-symbols-outlined text-4xl mb-2">workload</span><p class="text-sm">Aucune donnée de charge</p></div>
+      } @else {
+        <div class="divide-y divide-slate-50">
+          @for (w of workload(); track w.userId) {
+            <div class="px-6 py-4 flex items-center gap-4 hover:bg-slate-50/50 transition-colors">
+              <div class="w-10 h-10 rounded-full {{ w.role === 'GESTIONNAIRE' ? 'bg-emerald-100' : 'bg-amber-100' }} flex items-center justify-center">
+                <span class="material-symbols-outlined text-sm {{ w.role === 'GESTIONNAIRE' ? 'text-emerald-700' : 'text-amber-700' }}">{{ w.role === 'GESTIONNAIRE' ? 'manage_accounts' : 'engineering' }}</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between mb-1">
+                  <p class="text-sm font-bold text-on-surface">{{ w.fullName }}</p>
+                  <span class="text-xs font-bold {{ getChargeTextClass(w.chargePourcentage) }}">{{ w.dossiersActifs }}/{{ w.chargeMax }} dossiers</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full {{ getChargeClass(w.chargePourcentage) }} rounded-full transition-all" [style.width.%]="w.chargePourcentage"></div>
+                  </div>
+                  <span class="text-[10px] font-bold {{ getChargeTextClass(w.chargePourcentage) }}">{{ w.chargePourcentage | number:'1.0-0' }}%</span>
+                </div>
+                <div class="flex items-center gap-3 mt-1">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ w.role === 'GESTIONNAIRE' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }}">{{ w.role === 'GESTIONNAIRE' ? 'Gestionnaire' : 'Expert' }}</span>
+                  <span class="text-[10px] text-slate-400">{{ w.dossiersTotal }} dossiers traités au total</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Audit Section -->
+  @if (activeSection() === 'audit') {
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+      <div class="px-6 py-4 border-b border-surface-container-low flex justify-between items-center">
+        <h2 class="text-sm font-bold text-primary uppercase tracking-widest">Journal d'audit — Qui a fait quoi, quand</h2>
+        <a routerLink="/admin/gestion-technique" class="text-xs font-bold text-primary hover:text-on-tertiary-container transition-colors tracking-widest">Voir logs système</a>
+      </div>
+      @if (auditLogs().length === 0) {
+        <div class="p-10 text-center text-on-surface-variant"><span class="material-symbols-outlined text-4xl mb-2">history</span><p class="text-sm">Aucune entrée d'audit</p></div>
+      } @else {
+        <div class="divide-y divide-slate-50">
+          @for (log of auditLogs(); track log.id) {
+            <div class="px-6 py-4 flex items-start gap-4 hover:bg-slate-50/50 transition-colors">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider min-w-15 justify-center {{ getActionClass(log.action) }}">{{ getActionLabel(log.action) }}</span>
+              <div class="flex-1">
+                <p class="text-sm text-on-surface">{{ log.details }}</p>
+                <div class="flex items-center gap-3 mt-1">
+                  <span class="text-[10px] text-slate-400">Par <strong class="text-on-surface-variant">{{ log.utilisateur }}</strong> ({{ log.role }})</span>
+                  <span class="text-[10px] text-slate-400">Cible : {{ log.cible }}</span>
+                </div>
+              </div>
+              <span class="text-[10px] text-slate-400 whitespace-nowrap">{{ formatShortDate(log.timestamp) }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+}

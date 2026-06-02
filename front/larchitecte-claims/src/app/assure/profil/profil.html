@@ -1,0 +1,206 @@
+﻿<div class="mb-10">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Mon Profil</h1>
+      <p class="text-on-surface-variant mt-1">Gérez vos informations personnelles.</p>
+    </div>
+    <div class="flex gap-3">
+      @if (!editMode()) {
+        <button class="bg-primary text-on-primary px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:opacity-90 transition-all" (click)="toggleEditMode()">
+          <span class="material-symbols-outlined text-sm">edit</span>Modifier
+        </button>
+      }
+      <button class="bg-surface-container-low text-on-surface-variant px-5 py-2.5 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-surface-container transition-all" (click)="openPasswordModal()">
+        <span class="material-symbols-outlined text-sm">lock</span>Changer le mot de passe
+      </button>
+    </div>
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="flex justify-center items-center h-64">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+} @else if (error()) {
+  <div class="bg-error-container text-on-error-container p-4 rounded-lg">
+    <p class="font-medium">{{ error() }}</p>
+  </div>
+} @else if (profile()) {
+  <!-- Success message -->
+  @if (saveProfileSuccess()) {
+    <div class="bg-emerald-50 text-emerald-700 p-4 rounded-lg mb-6 flex items-center gap-2">
+      <span class="material-symbols-outlined">check_circle</span>
+      <span class="text-sm font-medium">Profil mis à jour avec succès</span>
+    </div>
+  }
+
+  <div class="max-w-4xl grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Avatar Card -->
+    <div class="bg-surface-container-lowest rounded-xl p-8 shadow-sm flex flex-col items-center">
+      <div class="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+        <span class="text-2xl font-black text-primary">{{ getInitials(profile()!.prenom, profile()!.nom) }}</span>
+      </div>
+      <h2 class="text-lg font-bold text-primary">{{ profile()!.fullName }}</h2>
+      <p class="text-xs text-slate-500 uppercase tracking-widest mt-1">{{ getRoleLabel(profile()!.role) }}</p>
+      <div class="w-full border-t border-slate-100 mt-6 pt-4 space-y-3">
+        <div class="flex items-center gap-3 text-xs text-on-surface-variant">
+          <span class="material-symbols-outlined text-base text-slate-400">mail</span>
+          <span class="truncate">{{ profile()!.email }}</span>
+        </div>
+        @if (profile()!.telephone) {
+          <div class="flex items-center gap-3 text-xs text-on-surface-variant">
+            <span class="material-symbols-outlined text-base text-slate-400">phone</span>
+            <span>{{ profile()!.telephone }}</span>
+          </div>
+        }
+        <div class="flex items-center gap-3 text-xs text-on-surface-variant">
+          <span class="material-symbols-outlined text-base text-slate-400">calendar_today</span>
+          <span>Membre depuis {{ formatDate(profile()!.createdAt) }}</span>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+          <span class="material-symbols-outlined text-base text-slate-400">verified</span>
+          <span class="{{ profile()!.enabled ? 'text-emerald-600' : 'text-red-500' }}">{{ profile()!.enabled ? 'Compte actif' : 'Compte désactivé' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Card -->
+    <div class="lg:col-span-2 bg-surface-container-lowest rounded-xl p-8 shadow-sm">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-sm font-bold text-primary uppercase tracking-widest">Informations personnelles</h2>
+        @if (editMode()) {
+          <div class="flex gap-2">
+            <button class="px-4 py-2 rounded-lg text-xs font-bold text-on-surface-variant bg-surface-container-low hover:bg-surface-container transition-colors" (click)="cancelEdit()">Annuler</button>
+            <button class="px-4 py-2 rounded-lg text-xs font-bold text-on-primary bg-primary hover:opacity-90 transition-colors flex items-center gap-1" (click)="saveProfile()" [disabled]="savingProfile()">
+              @if (savingProfile()) {
+                <div class="animate-spin rounded-full h-3 w-3 border-b border-on-primary"></div>
+              }
+              Enregistrer
+            </button>
+          </div>
+        }
+      </div>
+
+      @if (saveProfileError()) {
+        <div class="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-xs font-medium flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">error</span>
+          {{ saveProfileError() }}
+        </div>
+      }
+
+      <form [formGroup]="profileForm" class="space-y-5">
+        <div class="grid grid-cols-2 gap-5">
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Prénom</label>
+            @if (editMode()) {
+              <input formControlName="prenom" class="w-full px-4 py-3 bg-surface-container-low border border-slate-200 rounded-lg text-on-surface text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none" type="text" />
+              @if (profileForm.get('prenom')?.invalid && profileForm.get('prenom')?.touched) {
+                <p class="text-[10px] text-red-500 mt-1">Le prénom est obligatoire (min. 2 caractères)</p>
+              }
+            } @else {
+              <p class="px-4 py-3 bg-surface-container-low rounded-lg text-on-surface text-sm">{{ profile()!.prenom }}</p>
+            }
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Nom</label>
+            @if (editMode()) {
+              <input formControlName="nom" class="w-full px-4 py-3 bg-surface-container-low border border-slate-200 rounded-lg text-on-surface text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none" type="text" />
+              @if (profileForm.get('nom')?.invalid && profileForm.get('nom')?.touched) {
+                <p class="text-[10px] text-red-500 mt-1">Le nom est obligatoire (min. 2 caractères)</p>
+              }
+            } @else {
+              <p class="px-4 py-3 bg-surface-container-low rounded-lg text-on-surface text-sm">{{ profile()!.nom }}</p>
+            }
+          </div>
+        </div>
+        <div class="space-y-1.5">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Email</label>
+          @if (editMode()) {
+            <input formControlName="email" class="w-full px-4 py-3 bg-surface-container-low border border-slate-200 rounded-lg text-on-surface text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none" type="email" />
+            @if (profileForm.get('email')?.invalid && profileForm.get('email')?.touched) {
+              <p class="text-[10px] text-red-500 mt-1">Veuillez entrer un email valide</p>
+            }
+          } @else {
+            <p class="px-4 py-3 bg-surface-container-low rounded-lg text-on-surface text-sm">{{ profile()!.email }}</p>
+          }
+        </div>
+        <div class="space-y-1.5">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Téléphone</label>
+          @if (editMode()) {
+            <input formControlName="telephone" class="w-full px-4 py-3 bg-surface-container-low border border-slate-200 rounded-lg text-on-surface text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none" type="tel" placeholder="06 XX XX XX XX" />
+          } @else {
+            <p class="px-4 py-3 bg-surface-container-low rounded-lg text-on-surface text-sm">{{ profile()!.telephone || 'Non renseigné' }}</p>
+          }
+        </div>
+        <div class="space-y-1.5">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Rôle</label>
+          <p class="px-4 py-3 bg-surface-container-low rounded-lg text-slate-400 text-sm">{{ getRoleLabel(profile()!.role) }}</p>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Change Password Modal -->
+@if (showPasswordModal()) {
+  <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center" (click)="closePasswordModal()">
+    <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-bold text-primary">Changer le mot de passe</h3>
+        <button class="p-1 text-slate-400 hover:text-slate-600 transition-colors" (click)="closePasswordModal()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      @if (passwordSuccess()) {
+        <div class="bg-emerald-50 text-emerald-700 p-4 rounded-lg mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined">check_circle</span>
+          <span class="text-sm font-medium">Mot de passe modifié avec succès</span>
+        </div>
+      }
+
+      @if (passwordError()) {
+        <div class="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-xs font-medium flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">error</span>
+          {{ passwordError() }}
+        </div>
+      }
+
+      <form [formGroup]="passwordForm" class="space-y-4">
+        <div class="space-y-1.5">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Mot de passe actuel</label>
+          <input formControlName="currentPassword" type="password" class="w-full px-4 py-3 bg-surface-container-low border border-slate-200 rounded-lg text-on-surface text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none" placeholder="Entrez votre mot de passe actuel" />
+          @if (passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched) {
+            <p class="text-[10px] text-red-500 mt-1">Le mot de passe actuel est obligatoire</p>
+          }
+        </div>
+        <div class="space-y-1.5">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Nouveau mot de passe</label>
+          <input formControlName="newPassword" type="password" class="w-full px-4 py-3 bg-surface-container-low border border-slate-200 rounded-lg text-on-surface text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none" placeholder="Min. 6 caractères" />
+          @if (passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched) {
+            <p class="text-[10px] text-red-500 mt-1">Le nouveau mot de passe est obligatoire (min. 6 caractères)</p>
+          }
+        </div>
+        <div class="space-y-1.5">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Confirmer le mot de passe</label>
+          <input formControlName="confirmPassword" type="password" class="w-full px-4 py-3 bg-surface-container-low border border-slate-200 rounded-lg text-on-surface text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none" placeholder="Retapez le nouveau mot de passe" />
+          @if (passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched) {
+            <p class="text-[10px] text-red-500 mt-1">La confirmation est obligatoire</p>
+          }
+          @if (passwordForm.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.touched) {
+            <p class="text-[10px] text-red-500 mt-1">Les mots de passe ne correspondent pas</p>
+          }
+        </div>
+        <div class="flex gap-3 pt-4">
+          <button type="button" class="flex-1 px-4 py-3 rounded-lg text-sm font-semibold text-on-surface-variant bg-surface-container-low hover:bg-surface-container transition-colors" (click)="closePasswordModal()">Annuler</button>
+          <button type="button" class="flex-1 px-4 py-3 rounded-lg text-sm font-semibold text-on-primary bg-primary hover:opacity-90 transition-all flex items-center justify-center gap-2" (click)="changePassword()" [disabled]="savingPassword()">
+            @if (savingPassword()) {
+              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-on-primary"></div>
+            }
+            Confirmer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

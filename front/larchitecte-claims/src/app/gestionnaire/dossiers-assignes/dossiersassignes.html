@@ -1,0 +1,874 @@
+﻿<div class="mb-10">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Dossiers assignés</h1>
+      <p class="text-on-surface-variant mt-1">Les dossiers qui vous ont été confiés.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Success / Error notifications -->
+@if (success()) {
+  <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-emerald-700 text-sm mb-6 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">check_circle</span>
+    {{ success() }}
+  </div>
+}
+@if (error()) {
+  <div class="bg-error-container/10 p-4 rounded-xl text-on-error-container text-sm mb-6 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">error</span>
+    {{ error() }}
+  </div>
+}
+
+@if (loading()) {
+  <div class="flex items-center justify-center py-20">
+    <span class="material-symbols-outlined animate-spin text-3xl text-primary">progress_activity</span>
+    <span class="ml-3 text-on-surface-variant">Chargement...</span>
+  </div>
+} @else {
+
+<!-- Stats -->
+<div class="grid grid-cols-4 gap-4 mb-6">
+  <div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+        <span class="material-symbols-outlined text-primary text-lg">folder</span>
+      </div>
+      <div>
+        <p class="text-xl font-bold text-primary">{{ totalDossiers() }}</p>
+        <p class="text-[10px] text-slate-500 uppercase tracking-widest">Total dossiers</p>
+      </div>
+    </div>
+  </div>
+  <div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
+        <span class="material-symbols-outlined text-amber-600 text-lg">pending</span>
+      </div>
+      <div>
+        <p class="text-xl font-bold text-amber-600">{{ enCoursCount() }}</p>
+        <p class="text-[10px] text-slate-500 uppercase tracking-widest">En cours</p>
+      </div>
+    </div>
+  </div>
+  <div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+        <span class="material-symbols-outlined text-blue-600 text-lg">science</span>
+      </div>
+      <div>
+        <p class="text-xl font-bold text-blue-600">{{ expertiseCount() }}</p>
+        <p class="text-[10px] text-slate-500 uppercase tracking-widest">Expertise</p>
+      </div>
+    </div>
+  </div>
+  <div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
+        <span class="material-symbols-outlined text-emerald-600 text-lg">task_alt</span>
+      </div>
+      <div>
+        <p class="text-xl font-bold text-emerald-600">{{ clotureCount() }}</p>
+        <p class="text-[10px] text-slate-500 uppercase tracking-widest">Clôturés</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="flex gap-3 mb-6">
+  <div class="relative flex-1">
+    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+    <input (input)="onSearchInput($event)"
+           class="bg-surface-container-low border-none rounded-lg pl-9 pr-4 py-2.5 text-xs w-full"
+           placeholder="Rechercher par référence, assuré, type, lieu..." type="text" />
+  </div>
+  <div class="flex bg-surface-container-low rounded-lg overflow-hidden">
+    <button (click)="setStatusFilter('all')"
+            class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all"
+            [class.bg-primary]="statusFilter() === 'all'" [class.text-on-primary]="statusFilter() === 'all'"
+            [class.text-slate-500]="statusFilter() !== 'all'">Tous</button>
+    <button (click)="setStatusFilter('EN_COURS')"
+            class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all"
+            [class.bg-amber-600]="statusFilter() === 'EN_COURS'" [class.text-white]="statusFilter() === 'EN_COURS'"
+            [class.text-slate-500]="statusFilter() !== 'EN_COURS'">En cours</button>
+    <button (click)="setStatusFilter('EN_REVISION')"
+            class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all"
+            [class.bg-amber-600]="statusFilter() === 'EN_REVISION'" [class.text-white]="statusFilter() === 'EN_REVISION'"
+            [class.text-slate-500]="statusFilter() !== 'EN_REVISION'">Révision</button>
+    <button (click)="setStatusFilter('EXPERTISE')"
+            class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all"
+            [class.bg-blue-600]="statusFilter() === 'EXPERTISE'" [class.text-white]="statusFilter() === 'EXPERTISE'"
+            [class.text-slate-500]="statusFilter() !== 'EXPERTISE'">Expertise</button>
+    <button (click)="setStatusFilter('VALIDE')"
+            class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all"
+            [class.bg-emerald-600]="statusFilter() === 'VALIDE'" [class.text-white]="statusFilter() === 'VALIDE'"
+            [class.text-slate-500]="statusFilter() !== 'VALIDE'">Validé</button>
+    <button (click)="setStatusFilter('INDEMNISATION_PROPOSEE')"
+            class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all"
+            [class.bg-purple-600]="statusFilter() === 'INDEMNISATION_PROPOSEE'" [class.text-white]="statusFilter() === 'INDEMNISATION_PROPOSEE'"
+            [class.text-slate-500]="statusFilter() !== 'INDEMNISATION_PROPOSEE'">Indemnisation</button>
+    <button (click)="setStatusFilter('PAIEMENT_EN_COURS')"
+            class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all"
+            [class.bg-cyan-600]="statusFilter() === 'PAIEMENT_EN_COURS'" [class.text-white]="statusFilter() === 'PAIEMENT_EN_COURS'"
+            [class.text-slate-500]="statusFilter() !== 'PAIEMENT_EN_COURS'">Paiement</button>
+    <button (click)="setStatusFilter('RECOURS')"
+            class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all"
+            [class.bg-orange-600]="statusFilter() === 'RECOURS'" [class.text-white]="statusFilter() === 'RECOURS'"
+            [class.text-slate-500]="statusFilter() !== 'RECOURS'">Recours</button>
+    <button (click)="setStatusFilter('CLOTURE')"
+            class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all"
+            [class.bg-slate-600]="statusFilter() === 'CLOTURE'" [class.text-white]="statusFilter() === 'CLOTURE'"
+            [class.text-slate-500]="statusFilter() !== 'CLOTURE'">Clôturé</button>
+  </div>
+</div>
+
+<!-- Claims Table -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+  @if (filteredClaims().length === 0) {
+    <div class="px-6 py-10 text-center text-on-surface-variant text-sm">
+      <span class="material-symbols-outlined text-3xl mb-2 block">folder_off</span>
+      Aucun dossier trouvé
+    </div>
+  } @else {
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low/50">
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Référence</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Assuré</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Type</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Date</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Expert</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Statut</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        @for (claim of filteredClaims(); track claim.id) {
+          <tr class="hover:bg-slate-50/50 transition-colors cursor-pointer" (click)="openDetail(claim)">
+            <td class="px-6 py-5 text-sm font-bold text-primary">#{{ claim.reference || claim.id.substring(0, 8) }}</td>
+            <td class="px-6 py-5 text-xs text-on-surface-variant font-medium">{{ claim.assureNom || 'N/A' }}</td>
+            <td class="px-6 py-5 text-xs text-on-surface-variant">{{ getTypeLabel(claim.type) }}</td>
+            <td class="px-6 py-5 text-xs text-slate-500">{{ formatDate(claim.dateSinistre || claim.createdAt) }}</td>
+            <td class="px-6 py-5 text-xs text-on-surface-variant">
+              @if (claim.expertNom) {
+                <span class="flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-xs text-blue-500">person</span>
+                  {{ claim.expertNom }}
+                </span>
+              } @else {
+                <span class="text-slate-400 italic">Non assigné</span>
+              }
+            </td>
+            <td class="px-6 py-5 text-right">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ getStatutClass(claim.statut) }}">
+                {{ getStatutLabel(claim.statut) }}
+              </span>
+            </td>
+            <td class="px-6 py-5 text-right" (click)="$event.stopPropagation()">
+              <div class="flex gap-2 justify-end flex-wrap">
+                @if (!claim.expertId && claim.statut !== 'CLOTURE' && claim.statut !== 'VALIDE' && claim.statut !== 'REFUSE') {
+                  <button (click)="openAssignExpert(claim.id)" class="px-3 py-1.5 bg-primary text-on-primary rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+                    <span class="material-symbols-outlined text-xs align-middle mr-1">engineering</span>Assigner
+                  </button>
+                  <button (click)="autoAssignExpert(claim.id)" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+                    <span class="material-symbols-outlined text-xs align-middle mr-1">auto_awesome</span>Auto
+                  </button>
+                }
+                @if (claim.statut === 'EN_REVISION') {
+                  <button (click)="updateStatut(claim.id, 'VALIDE')" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+                    <span class="material-symbols-outlined text-xs align-middle mr-1">check</span>Valider
+                  </button>
+                  <button (click)="updateStatut(claim.id, 'REFUSE')" class="px-3 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+                    <span class="material-symbols-outlined text-xs align-middle mr-1">block</span>Refuser
+                  </button>
+                }
+                @if (claim.statut === 'VALIDE') {
+                  <button (click)="updateStatut(claim.id, 'CLOTURE')" class="px-3 py-1.5 bg-slate-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+                    <span class="material-symbols-outlined text-xs align-middle mr-1">task_alt</span>Clôturer
+                  </button>
+                }
+                <button (click)="openDetail(claim)" class="px-3 py-1.5 bg-surface-container-low text-on-surface-variant rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-200 transition-all">
+                  <span class="material-symbols-outlined text-xs align-middle mr-1">visibility</span>Détail
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+}<!-- end else -->
+
+<!-- Detail Panel -->
+@if (selectedClaim()) {
+  <div class="fixed inset-0 bg-black/40 z-50 flex items-start justify-end" (click)="closeDetail()">
+    <div class="bg-white h-full w-full max-w-lg shadow-2xl overflow-y-auto" (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="p-6 border-b border-slate-100">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold text-primary">Détail du dossier</h2>
+          <button (click)="closeDetail()" class="p-1 hover:bg-slate-100 rounded-lg transition-all">
+            <span class="material-symbols-outlined text-slate-400">close</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Claim Info -->
+      <div class="p-6 border-b border-slate-100">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p class="text-base font-bold text-primary">#{{ selectedClaim()!.reference || selectedClaim()!.id.substring(0, 8) }}</p>
+            <p class="text-xs text-slate-500">{{ getTypeLabel(selectedClaim()!.type) }}</p>
+          </div>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ getStatutClass(selectedClaim()!.statut) }}">
+            {{ getStatutLabel(selectedClaim()!.statut) }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-surface-container-low rounded-lg p-3">
+            <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Assuré</p>
+            <p class="text-sm font-semibold text-primary">{{ selectedClaim()!.assureNom || 'N/A' }}</p>
+          </div>
+          <div class="bg-surface-container-low rounded-lg p-3">
+            <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Date sinistre</p>
+            <p class="text-sm font-semibold text-primary">{{ formatDate(selectedClaim()!.dateSinistre) }}</p>
+          </div>
+          <div class="bg-surface-container-low rounded-lg p-3">
+            <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Lieu</p>
+            <p class="text-sm font-semibold text-primary">{{ selectedClaim()!.lieu || 'N/A' }}</p>
+          </div>
+          <div class="bg-surface-container-low rounded-lg p-3">
+            <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Estimation</p>
+            <p class="text-sm font-semibold text-primary">{{ selectedClaim()!.estimation ? selectedClaim()!.estimation + ' DT' : 'N/A' }}</p>
+          </div>
+          <div class="bg-surface-container-low rounded-lg p-3">
+            <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Expert</p>
+            <p class="text-sm font-semibold text-primary">{{ selectedClaim()!.expertNom || 'Non assigné' }}</p>
+            @if (selectedClaim()!.expertId && getExpertProfile(selectedClaim()!.expertId)) {
+              <div class="mt-2 space-y-1">
+                @if (getExpertProfile(selectedClaim()!.expertId)!.specialite) {
+                  <div class="flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[10px] text-amber-600">engineering</span>
+                    <span class="text-[10px] text-amber-700 font-semibold">{{ getSpecialiteLabel(getExpertProfile(selectedClaim()!.expertId)!.specialite) }}</span>
+                  </div>
+                }
+                @if (getExpertProfile(selectedClaim()!.expertId)!.zoneIntervention) {
+                  <div class="flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[10px] text-blue-500">location_on</span>
+                    <span class="text-[10px] text-slate-600">{{ getExpertProfile(selectedClaim()!.expertId)!.zoneIntervention }}</span>
+                  </div>
+                }
+                @if (getExpertProfile(selectedClaim()!.expertId)!.notePerformance) {
+                  <div class="flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[10px] text-amber-500">star</span>
+                    <span class="text-[10px] text-amber-700 font-bold">{{ getExpertProfile(selectedClaim()!.expertId)!.notePerformance }}/5</span>
+                  </div>
+                }
+                @if (getExpertProfile(selectedClaim()!.expertId)!.chargeMax) {
+                  <div class="flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[10px] text-slate-400">workload</span>
+                    <span class="text-[10px] text-slate-500">Max {{ getExpertProfile(selectedClaim()!.expertId)!.chargeMax }} dossiers</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          <div class="bg-surface-container-low rounded-lg p-3">
+            <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Créé le</p>
+            <p class="text-sm font-semibold text-primary">{{ formatDateTime(selectedClaim()!.createdAt) }}</p>
+          </div>
+        </div>
+
+        @if (selectedClaim()!.description) {
+          <div class="mt-4 bg-surface-container-low rounded-lg p-3">
+            <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Description</p>
+            <p class="text-xs text-on-surface-variant leading-relaxed">{{ selectedClaim()!.description }}</p>
+          </div>
+        }
+
+        @if (selectedClaim()!.notesInternes) {
+          <div class="mt-4 bg-amber-50 rounded-lg p-3">
+            <p class="text-[10px] text-amber-600 uppercase tracking-widest mb-1">Notes internes</p>
+            <p class="text-xs text-amber-800 leading-relaxed whitespace-pre-line">{{ selectedClaim()!.notesInternes }}</p>
+          </div>
+        }
+
+        <!-- Qualification du sinistre (2.2.1) -->
+        <div class="mt-4">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Qualification du sinistre</p>
+            <button (click)="openQualificationModal(selectedClaim()!.id)" class="text-[10px] text-primary font-bold uppercase tracking-widest hover:underline">
+              {{ selectedClaim()!.gravite ? 'Modifier' : 'Qualifier' }}
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="bg-surface-container-low rounded-lg p-3">
+              <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Gravité</p>
+              @if (selectedClaim()!.gravite) {
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ getGraviteClass(selectedClaim()!.gravite) }}">
+                  {{ getGraviteLabel(selectedClaim()!.gravite) }}
+                </span>
+              } @else {
+                <p class="text-xs text-slate-400 italic">Non définie</p>
+              }
+            </div>
+            <div class="bg-surface-container-low rounded-lg p-3">
+              <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Couverture</p>
+              <p class="text-xs font-semibold text-primary">{{ selectedClaim()!.couvertureContractuelle || '—' }}</p>
+            </div>
+            <div class="bg-surface-container-low rounded-lg p-3">
+              <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Franchise</p>
+              <p class="text-xs font-semibold text-primary">{{ selectedClaim()!.franchise ? selectedClaim()!.franchise + ' DT' : '—' }}</p>
+            </div>
+            <div class="bg-surface-container-low rounded-lg p-3">
+              <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Plafond</p>
+              <p class="text-xs font-semibold text-primary">{{ selectedClaim()!.plafondCouverture ? selectedClaim()!.plafondCouverture + ' DT' : '—' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Indemnisation (2.2.4) -->
+        @if (selectedClaim()!.montantIndemnisationPropose !== null || selectedClaim()!.statut === 'VALIDE' || selectedClaim()!.statut === 'INDEMNISATION_PROPOSEE' || selectedClaim()!.statut === 'INDEMNISATION_ACCEPTEE' || selectedClaim()!.statut === 'PAIEMENT_EN_COURS' || selectedClaim()!.statut === 'RECOURS') {
+          <div class="mt-4">
+            <p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2">Indemnisation</p>
+            <div class="bg-purple-50 rounded-lg p-3 space-y-2">
+              @if (selectedClaim()!.montantIndemnisationPropose !== null) {
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] text-purple-600 uppercase tracking-widest">Montant proposé</span>
+                  <span class="text-sm font-bold text-purple-700">{{ selectedClaim()!.montantIndemnisationPropose }} DT</span>
+                </div>
+              }
+              @if (selectedClaim()!.montantIndemnisationFinal !== null) {
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] text-purple-600 uppercase tracking-widest">Montant final</span>
+                  <span class="text-sm font-bold text-emerald-700">{{ selectedClaim()!.montantIndemnisationFinal }} DT</span>
+                </div>
+              }
+              @if (selectedClaim()!.motifIndemnisation) {
+                <div>
+                  <span class="text-[10px] text-purple-600 uppercase tracking-widest">Motif</span>
+                  <p class="text-xs text-purple-800">{{ selectedClaim()!.motifIndemnisation }}</p>
+                </div>
+              }
+              @if (selectedClaim()!.indemnisationAcceptee === true) {
+                <div class="flex items-center gap-1 text-emerald-600">
+                  <span class="material-symbols-outlined text-sm">check_circle</span>
+                  <span class="text-xs font-bold">Acceptée par l'assuré</span>
+                </div>
+              } @else if (selectedClaim()!.indemnisationAcceptee === false) {
+                <div class="flex items-center gap-1 text-red-600">
+                  <span class="material-symbols-outlined text-sm">cancel</span>
+                  <span class="text-xs font-bold">Refusée par l'assuré</span>
+                </div>
+                @if (selectedClaim()!.motifRefusIndemnisation) {
+                  <p class="text-xs text-red-700 ml-5">Motif : {{ selectedClaim()!.motifRefusIndemnisation }}</p>
+                }
+              }
+              @if (selectedClaim()!.recoursEnCours) {
+                <div class="flex items-center gap-1 text-orange-600">
+                  <span class="material-symbols-outlined text-sm">gavel</span>
+                  <span class="text-xs font-bold">Recours en cours</span>
+                </div>
+              }
+              @if (selectedClaim()!.datePaiement) {
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] text-emerald-600 uppercase tracking-widest">Paiement effectué</span>
+                  <span class="text-xs font-semibold text-emerald-700">{{ formatDate(selectedClaim()!.datePaiement) }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (selectedClaim()!.piecesJointes && selectedClaim()!.piecesJointes.length > 0) {
+          <div class="mt-4">
+            <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-2">Pièces jointes ({{ selectedClaim()!.piecesJointes.length }})</p>
+            <div class="space-y-2">
+              @for (piece of selectedClaim()!.piecesJointes; track piece) {
+                <div class="flex items-center gap-3 p-3 bg-surface-container-low rounded-lg">
+                  <span class="material-symbols-outlined text-primary text-sm">attach_file</span>
+                  <div class="flex-1">
+                    <p class="text-xs font-medium text-on-surface">{{ piece }}</p>
+                  </div>
+                  <button (click)="downloadFile(piece)"
+                     class="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors inline-flex" title="Télécharger">
+                    <span class="material-symbols-outlined text-sm">download</span>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Actions in detail -->
+        <div class="mt-4 flex gap-2 flex-wrap">
+          @if (!selectedClaim()!.expertId && selectedClaim()!.statut !== 'CLOTURE' && selectedClaim()!.statut !== 'VALIDE' && selectedClaim()!.statut !== 'REFUSE' && selectedClaim()!.statut !== 'ARCHIVE') {
+            <button (click)="openAssignExpert(selectedClaim()!.id)" class="flex-1 py-2 bg-primary text-on-primary rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+              <span class="material-symbols-outlined text-xs align-middle mr-1">engineering</span>Assigner Expert
+            </button>
+            <button (click)="autoAssignExpert(selectedClaim()!.id)" class="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+              <span class="material-symbols-outlined text-xs align-middle mr-1">auto_awesome</span>Auto-assigner
+            </button>
+          }
+          @if (selectedClaim()!.statut === 'EN_REVISION') {
+            <button (click)="updateStatut(selectedClaim()!.id, 'VALIDE')" class="flex-1 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+              <span class="material-symbols-outlined text-xs align-middle mr-1">check</span>Valider
+            </button>
+            <button (click)="updateStatut(selectedClaim()!.id, 'REFUSE')" class="flex-1 py-2 bg-red-500 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+              <span class="material-symbols-outlined text-xs align-middle mr-1">block</span>Refuser
+            </button>
+          }
+          <!-- Indemnisation workflow (2.2.4) -->
+          @if (selectedClaim()!.statut === 'VALIDE' || selectedClaim()!.statut === 'EXPERTISE' || selectedClaim()!.statut === 'EN_REVISION') {
+            <button (click)="openIndemnisationModal(selectedClaim()!.id)" class="flex-1 py-2 bg-purple-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+              <span class="material-symbols-outlined text-xs align-middle mr-1">payments</span>Proposer indemnisation
+            </button>
+          }
+          @if (selectedClaim()!.statut === 'INDEMNISATION_PROPOSEE') {
+            <button (click)="accepterIndemnisation(selectedClaim()!.id)" class="flex-1 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+              <span class="material-symbols-outlined text-xs align-middle mr-1">check</span>Accepter
+            </button>
+            <button (click)="openRefusIndemnisationModal(selectedClaim()!.id)" class="flex-1 py-2 bg-red-500 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+              <span class="material-symbols-outlined text-xs align-middle mr-1">gavel</span>Refuser (Recours)
+            </button>
+          }
+          @if (selectedClaim()!.statut === 'INDEMNISATION_ACCEPTEE') {
+            <button (click)="initierPaiement(selectedClaim()!.id)" class="w-full py-2 bg-cyan-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+              <span class="material-symbols-outlined text-xs align-middle mr-1">account_balance</span>Initier le paiement
+            </button>
+          }
+          @if (selectedClaim()!.statut === 'PAIEMENT_EN_COURS') {
+            <button (click)="confirmerPaiement(selectedClaim()!.id)" class="w-full py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+              <span class="material-symbols-outlined text-xs align-middle mr-1">task_alt</span>Confirmer paiement & Clôturer
+            </button>
+          }
+          @if (selectedClaim()!.statut === 'RECOURS') {
+            <button (click)="openIndemnisationModal(selectedClaim()!.id)" class="flex-1 py-2 bg-purple-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+              <span class="material-symbols-outlined text-xs align-middle mr-1">payments</span>Nouvelle proposition
+            </button>
+          }
+        </div>
+
+        <!-- Secondary actions -->
+        <div class="mt-3 flex gap-2 flex-wrap">
+          <button (click)="openNotesModal(selectedClaim()!.id)" class="flex-1 py-2 bg-surface-container-low text-on-surface-variant rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-200 transition-all">
+            <span class="material-symbols-outlined text-xs align-middle mr-1">edit_note</span>Notes
+          </button>
+                    <button (click)="openTransferModal(selectedClaim()!.id)" class="flex-1 py-2 bg-surface-container-low text-on-surface-variant rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-200 transition-all">
+            <span class="material-symbols-outlined text-xs align-middle mr-1">swap_horiz</span>Transférer
+          </button>
+          @if (selectedClaim()!.statut === 'CLOTURE' || selectedClaim()!.statut === 'REFUSE') {
+            <button (click)="archiverSinistre(selectedClaim()!.id)" class="flex-1 py-2 bg-surface-container-low text-on-surface-variant rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-200 transition-all">
+              <span class="material-symbols-outlined text-xs align-middle mr-1">archive</span>Archiver
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Expertises Section -->
+      <div class="p-6">
+        <h3 class="text-sm font-bold text-primary mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">science</span>
+          Expertises ({{ claimExpertises().length }})
+        </h3>
+
+        @if (detailLoading()) {
+          <div class="flex items-center justify-center py-8">
+            <span class="material-symbols-outlined animate-spin text-xl text-primary">progress_activity</span>
+          </div>
+        } @else if (claimExpertises().length === 0) {
+          <div class="text-center py-8 text-on-surface-variant">
+            <span class="material-symbols-outlined text-2xl mb-1 block">science</span>
+            <p class="text-xs">Aucune expertise pour ce dossier</p>
+          </div>
+        } @else {
+          <div class="space-y-3">
+            @for (expertise of claimExpertises(); track expertise.id) {
+              <div class="bg-surface-container-low rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+                      <span class="material-symbols-outlined text-blue-600 text-sm">person</span>
+                    </div>
+                    <div>
+                      <p class="text-xs font-bold text-primary">{{ expertise.expertNom || 'Expert' }}</p>
+                      <p class="text-[10px] text-slate-500">{{ expertise.claimReference || '' }}</p>
+                    </div>
+                  </div>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ getExpertiseStatutClass(expertise.statut) }}">
+                    {{ getExpertiseStatutLabel(expertise.statut) }}
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                  @if (expertise.montantEstime) {
+                    <div class="bg-white rounded-lg p-2">
+                      <p class="text-[10px] text-slate-500 uppercase tracking-widest">Montant estimé</p>
+                      <p class="text-xs font-semibold text-primary">{{ expertise.montantEstime }} DT</p>
+                    </div>
+                  }
+                  @if (expertise.recommandation) {
+                    <div class="bg-white rounded-lg p-2">
+                      <p class="text-[10px] text-slate-500 uppercase tracking-widest">Recommandation</p>
+                      <p class="text-xs font-semibold text-primary">{{ expertise.recommandation }}</p>
+                    </div>
+                  }
+                  @if (expertise.dateRapport) {
+                    <div class="bg-white rounded-lg p-2">
+                      <p class="text-[10px] text-slate-500 uppercase tracking-widest">Date rapport</p>
+                      <p class="text-xs font-semibold text-primary">{{ formatDate(expertise.dateRapport) }}</p>
+                    </div>
+                  }
+                  <div class="bg-white rounded-lg p-2">
+                    <p class="text-[10px] text-slate-500 uppercase tracking-widest">Créée le</p>
+                    <p class="text-xs font-semibold text-primary">{{ formatDate(expertise.createdAt) }}</p>
+                  </div>
+                </div>
+
+                @if (expertise.conclusion) {
+                  <div class="bg-white rounded-lg p-2 mb-3">
+                    <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Conclusion</p>
+                    <p class="text-xs text-on-surface-variant leading-relaxed">{{ expertise.conclusion }}</p>
+                  </div>
+                }
+
+                @if (expertise.piecesJointes && expertise.piecesJointes.length > 0) {
+                  <div class="bg-white rounded-lg p-2 mb-3">
+                    <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-2">Documents de l'expert ({{ expertise.piecesJointes.length }})</p>
+                    <div class="space-y-1.5">
+                      @for (doc of expertise.piecesJointes; track doc) {
+                        <div class="flex items-center gap-2 p-1.5 bg-surface-container-lowest rounded">
+                          <span class="material-symbols-outlined text-blue-600 text-xs">{{ getFileIcon(doc) }}</span>
+                          <p class="text-[11px] text-on-surface flex-1 truncate">{{ doc }}</p>
+                          <button (click)="downloadFile(doc)" class="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors inline-flex shrink-0" title="Télécharger">
+                            <span class="material-symbols-outlined text-xs">download</span>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if (expertise.statut === 'SOUMISE') {
+                  <div class="flex gap-2">
+                    <button (click)="validerExpertise(expertise.id)"
+                            class="flex-1 py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+                      <span class="material-symbols-outlined text-xs align-middle mr-1">check</span>Valider
+                    </button>
+                    <button (click)="refuserExpertise(expertise.id)"
+                            class="flex-1 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all">
+                      <span class="material-symbols-outlined text-xs align-middle mr-1">block</span>Refuser
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- History Section -->
+      <div class="p-6 border-b border-slate-100">
+        <h3 class="text-sm font-bold text-primary mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">history</span>
+          Historique ({{ claimHistory().length }})
+        </h3>
+
+        @if (claimHistory().length === 0) {
+          <div class="text-center py-8 text-on-surface-variant">
+            <span class="material-symbols-outlined text-2xl mb-1 block">history</span>
+            <p class="text-xs">Aucun historique disponible</p>
+          </div>
+        } @else {
+          <div class="space-y-3">
+            @for (entry of claimHistory(); track entry.id) {
+              <div class="flex gap-3">
+                <div class="flex flex-col items-center">
+                  <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-slate-500 text-sm">schedule</span>
+                  </div>
+                  @if (!$last) {
+                    <div class="w-px flex-1 bg-slate-200 mt-1"></div>
+                  }
+                </div>
+                <div class="flex-1 pb-4">
+                  <div class="flex items-center justify-between">
+                    <p class="text-xs font-bold text-primary">{{ entry.action }}</p>
+                    <p class="text-[10px] text-slate-400">{{ formatDateTime(entry.createdAt) }}</p>
+                  </div>
+                  <p class="text-xs text-on-surface-variant mt-1">{{ entry.description }}</p>
+                  <p class="text-[10px] text-slate-400 mt-1">Par {{ entry.utilisateurNom }} ({{ entry.utilisateurRole }})</p>
+                  @if (entry.ancienStatut && entry.nouveauStatut) {
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold {{ getStatutClass(entry.ancienStatut) }}">{{ getStatutLabel(entry.ancienStatut) }}</span>
+                      <span class="material-symbols-outlined text-[10px] text-slate-400">arrow_forward</span>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold {{ getStatutClass(entry.nouveauStatut) }}">{{ getStatutLabel(entry.nouveauStatut) }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Assigner Expert -->
+@if (showAssignModal()) {
+  <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" (click)="closeAssignModal()">
+    <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl" (click)="$event.stopPropagation()">
+      <h2 class="text-lg font-bold text-primary mb-2">Assigner un expert</h2>
+      <p class="text-xs text-on-surface-variant mb-6">Sélectionnez un expert pour ce dossier.</p>
+
+      @if (experts().length === 0) {
+        <div class="text-center py-8 text-on-surface-variant">
+          <span class="material-symbols-outlined text-2xl mb-1 block">engineering</span>
+          <p class="text-xs">Aucun expert disponible</p>
+        </div>
+      } @else {
+        <div class="space-y-3 mb-6 max-h-80 overflow-y-auto">
+          @for (expert of experts(); track expert.id) {
+            <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all"
+                   [class.border-primary]="selectedExpertId() === expert.id"
+                   [class.bg-primary/5]="selectedExpertId() === expert.id"
+                   [class.border-outline-variant/20]="selectedExpertId() !== expert.id"
+                   [class.opacity-50]="!expert.enabled">
+              <input type="radio" name="expert" [value]="expert.id"
+                     [checked]="selectedExpertId() === expert.id"
+                     (change)="selectedExpertId.set(expert.id)"
+                     [disabled]="!expert.enabled"
+                     class="accent-primary" />
+              <div class="flex items-center gap-3 flex-1">
+                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-primary text-sm">person</span>
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-primary">{{ expert.fullName }}</p>
+                  <p class="text-[10px] text-slate-500">{{ expert.email }}</p>
+                  <div class="flex items-center gap-2 mt-1">
+                    @if (expert.specialite) {
+                      <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-700">{{ getSpecialiteLabel(expert.specialite) }}</span>
+                    }
+                    @if (expert.zoneIntervention) {
+                      <span class="text-[9px] text-slate-400">{{ expert.zoneIntervention }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+              <div class="flex flex-col items-end gap-1">
+                @if (expert.enabled) {
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-100 text-emerald-700">Disponible</span>
+                } @else {
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-red-100 text-red-700">Indisponible</span>
+                }
+                <span class="text-[10px] text-slate-400">{{ getExpertDossierCount(expert.id) }} dossier(s)</span>
+                @if (expert.notePerformance) {
+                  <span class="text-[9px] text-amber-600 font-bold">{{ expert.notePerformance }}/5</span>
+                }
+                @if (expert.chargeMax) {
+                  <span class="text-[9px] text-slate-400">Max {{ expert.chargeMax }}</span>
+                }
+              </div>
+            </label>
+          }
+        </div>
+      }
+
+      <div class="flex gap-3 justify-end">
+        <button (click)="closeAssignModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-all">Annuler</button>
+        <button (click)="confirmAssignExpert()" [disabled]="!selectedExpertId() || assignLoading()"
+                class="px-6 py-2 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+          @if (assignLoading()) {
+            <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+          }
+          Confirmer
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Notes Internes -->
+@if (showNotesModal()) {
+  <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" (click)="closeNotesModal()">
+    <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl" (click)="$event.stopPropagation()">
+      <h2 class="text-lg font-bold text-primary mb-2">Notes internes</h2>
+      <p class="text-xs text-on-surface-variant mb-6">Notes visibles uniquement par l'équipe interne.</p>
+
+      <textarea [ngModel]="notesText()" (ngModelChange)="notesText.set($event)"
+                class="w-full bg-surface-container-low border-none rounded-lg p-4 text-xs min-h-37.5 resize-y focus:ring-2 focus:ring-primary/20"
+                placeholder="Ajouter des notes internes..."></textarea>
+
+      <div class="flex gap-3 justify-end mt-6">
+        <button (click)="closeNotesModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-all">Annuler</button>
+        <button (click)="saveNotes()"
+                class="px-6 py-2 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:opacity-90 transition-all">
+          Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+
+<!-- Modal Transférer Dossier -->
+@if (showTransferModal()) {
+  <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" (click)="closeTransferModal()">
+    <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl" (click)="$event.stopPropagation()">
+      <h2 class="text-lg font-bold text-primary mb-2">Transférer le dossier</h2>
+      <p class="text-xs text-on-surface-variant mb-6">Sélectionnez un autre gestionnaire pour ce dossier.</p>
+
+      @if (gestionnaires().length === 0) {
+        <div class="text-center py-8 text-on-surface-variant">
+          <span class="material-symbols-outlined text-2xl mb-1 block">person</span>
+          <p class="text-xs">Aucun gestionnaire disponible</p>
+        </div>
+      } @else {
+        <div class="space-y-3 mb-6 max-h-80 overflow-y-auto">
+          @for (gest of gestionnaires(); track gest.id) {
+            <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all"
+                   [class.border-primary]="transferGestionnaireId() === gest.id"
+                   [class.bg-primary/5]="transferGestionnaireId() === gest.id"
+                   [class.border-outline-variant/20]="transferGestionnaireId() !== gest.id">
+              <input type="radio" name="gestionnaire" [value]="gest.id"
+                     [checked]="transferGestionnaireId() === gest.id"
+                     (change)="transferGestionnaireId.set(gest.id)"
+                     class="accent-primary" />
+              <div class="flex items-center gap-3 flex-1">
+                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-primary text-sm">person</span>
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-primary">{{ gest.fullName }}</p>
+                  <p class="text-[10px] text-slate-500">{{ gest.email }}</p>
+                </div>
+              </div>
+            </label>
+          }
+        </div>
+      }
+
+      <div class="flex gap-3 justify-end">
+        <button (click)="closeTransferModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-all">Annuler</button>
+        <button (click)="confirmerTransfert()" [disabled]="!transferGestionnaireId()"
+                class="px-6 py-2 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+          Transférer
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Qualification Sinistre (2.2.1) -->
+@if (showQualificationModal()) {
+  <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" (click)="showQualificationModal.set(false)">
+    <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl" (click)="$event.stopPropagation()">
+      <h2 class="text-lg font-bold text-primary mb-2">Qualifier le sinistre</h2>
+      <p class="text-xs text-on-surface-variant mb-6">Définissez la gravité, la couverture contractuelle et les paramètres financiers.</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Gravité *</label>
+          <select [ngModel]="qualificationGravite()" (ngModelChange)="qualificationGravite.set($event)" name="gravite"
+                  class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg text-on-surface text-sm">
+            <option value="MINEURE">Mineure</option>
+            <option value="MODEREE">Modérée</option>
+            <option value="MAJEURE">Majeure</option>
+            <option value="CRITIQUE">Critique</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Couverture contractuelle</label>
+          <input [ngModel]="qualificationCouverture()" (ngModelChange)="qualificationCouverture.set($event)" name="couverture"
+                 class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg text-on-surface text-sm" type="text" placeholder="Ex: Habitation Tous Risques" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Franchise (DT)</label>
+            <input [ngModel]="qualificationFranchise()" (ngModelChange)="qualificationFranchise.set($event ? +$event : null)" name="franchise"
+                   class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg text-on-surface text-sm" type="number" placeholder="0" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Plafond (DT)</label>
+            <input [ngModel]="qualificationPlafond()" (ngModelChange)="qualificationPlafond.set($event ? +$event : null)" name="plafond"
+                   class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg text-on-surface text-sm" type="number" placeholder="0" />
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-3 justify-end mt-6">
+        <button (click)="showQualificationModal.set(false)" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-all">Annuler</button>
+        <button (click)="submitQualification()"
+                class="px-6 py-2 bg-primary text-on-primary rounded-lg text-sm font-semibold hover:opacity-90 transition-all">
+          Qualifier
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Proposer Indemnisation (2.2.4) -->
+@if (showIndemnisationModal()) {
+  <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" (click)="showIndemnisationModal.set(false)">
+    <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl" (click)="$event.stopPropagation()">
+      <h2 class="text-lg font-bold text-primary mb-2">Proposer une indemnisation</h2>
+      <p class="text-xs text-on-surface-variant mb-6">La franchise et le plafond seront appliqués automatiquement si définis dans la qualification.</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Montant proposé (DT) *</label>
+          <input [ngModel]="indemnisationMontant()" (ngModelChange)="indemnisationMontant.set($event ? +$event : null)" name="montant"
+                 class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg text-on-surface text-sm" type="number" placeholder="0.00" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Motif / Calcul</label>
+          <textarea [ngModel]="indemnisationMotif()" (ngModelChange)="indemnisationMotif.set($event)" name="motif"
+                    class="w-full bg-surface-container-low border-none rounded-lg p-4 text-xs min-h-20 resize-y focus:ring-2 focus:ring-primary/20"
+                    placeholder="Détail du calcul de l'indemnisation..."></textarea>
+        </div>
+      </div>
+
+      <div class="flex gap-3 justify-end mt-6">
+        <button (click)="showIndemnisationModal.set(false)" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-all">Annuler</button>
+        <button (click)="submitIndemnisation()" [disabled]="indemnisationMontant() === null"
+                class="px-6 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50">
+          Envoyer la proposition
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Refus Indemnisation (2.2.4) -->
+@if (showRefusIndemnisationModal()) {
+  <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" (click)="showRefusIndemnisationModal.set(false)">
+    <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl" (click)="$event.stopPropagation()">
+      <h2 class="text-lg font-bold text-primary mb-2">Refuser l'indemnisation</h2>
+      <p class="text-xs text-on-surface-variant mb-6">Un recours sera automatiquement ouvert. Précisez le motif du refus.</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Motif du refus *</label>
+          <textarea [ngModel]="refusIndemnisationMotif()" (ngModelChange)="refusIndemnisationMotif.set($event)" name="motifRefus"
+                    class="w-full bg-surface-container-low border-none rounded-lg p-4 text-xs min-h-24 resize-y focus:ring-2 focus:ring-primary/20"
+                    placeholder="Motif de contestation..."></textarea>
+        </div>
+      </div>
+
+      <div class="flex gap-3 justify-end mt-6">
+        <button (click)="showRefusIndemnisationModal.set(false)" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-all">Annuler</button>
+        <button (click)="submitRefusIndemnisation()" [disabled]="!refusIndemnisationMotif()"
+                class="px-6 py-2 bg-red-500 text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50">
+          Confirmer le refus
+        </button>
+      </div>
+    </div>
+  </div>
+}

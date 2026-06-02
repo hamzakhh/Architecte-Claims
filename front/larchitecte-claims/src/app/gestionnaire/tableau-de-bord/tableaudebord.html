@@ -1,0 +1,96 @@
+﻿<div class="mb-10">
+  <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Tableau de Bord</h1>
+  <p class="text-on-surface-variant mt-1">Vue d'ensemble de vos dossiers et statistiques personnelles.</p>
+</div>
+
+@if (loading()) {
+  <div class="flex items-center justify-center py-20">
+    <span class="material-symbols-outlined animate-spin text-3xl text-primary">progress_activity</span>
+    <span class="ml-3 text-on-surface-variant">Chargement...</span>
+  </div>
+} @else if (error()) {
+  <div class="bg-error-container/10 p-4 rounded-xl text-on-error-container text-sm">{{ error() }}</div>
+} @else {
+
+<!-- Alert: Dossiers sans gestionnaire -->
+@if (stats()?.dossiersSansGestionnaire ?? 0 > 0) {
+  <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-800 text-sm mb-6 flex items-center gap-3">
+    <span class="material-symbols-outlined text-amber-600">notification_important</span>
+    <span><strong>{{ stats()?.dossiersSansGestionnaire ?? 0 }}</strong> nouveau(x) sinistre(s) en attente de prise en charge</span>
+    <a routerLink="/gestionnaire/tous-sinistres" class="ml-auto px-3 py-1.5 bg-amber-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all">Voir</a>
+  </div>
+}
+
+<!-- Alert: Dossiers urgences (SLA > 7 jours) -->
+@if (stats()?.dossiersUrgence ?? 0 > 0) {
+  <div class="bg-red-50 border border-red-200 p-4 rounded-xl text-red-800 text-sm mb-6 flex items-center gap-3">
+    <span class="material-symbols-outlined text-red-600">warning</span>
+    <span><strong>{{ stats()?.dossiersUrgence ?? 0 }}</strong> dossier(s) dépassant le délai de 7 jours — intervention urgente requise</span>
+  </div>
+}
+
+<!-- Stat Cards Row 1: Mes dossiers -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Dossiers ouverts</span>
+    <h3 class="text-[2.75rem] font-bold text-primary tracking-tighter mt-2">{{ stats()?.dossiersOuverts ?? 0 }}</h3>
+    <div class="mt-4 flex items-center text-xs text-on-tertiary-container font-semibold"><span class="material-symbols-outlined text-sm mr-1">trending_up</span>En cours / Révision</div>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">En attente expertise</span>
+    <h3 class="text-[2.75rem] font-bold text-blue-600 tracking-tighter mt-2">{{ stats()?.dossiersEnAttente ?? 0 }}</h3>
+    <div class="mt-4 flex items-center text-xs text-blue-600 font-semibold"><span class="material-symbols-outlined text-sm mr-1">science</span>Expertise en cours</div>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Sinistres ce mois</span>
+    <h3 class="text-[2.75rem] font-bold text-emerald-600 tracking-tighter mt-2">{{ stats()?.sinistresCeMois ?? 0 }}</h3>
+    <div class="mt-4 flex items-center text-xs text-emerald-600 font-semibold uppercase tracking-widest">Ce mois</div>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Experts disponibles</span>
+    <h3 class="text-[2.75rem] font-bold text-primary tracking-tighter mt-2">{{ stats()?.expertsDisponibles ?? 0 }}</h3>
+    <div class="mt-4 flex items-center text-xs text-primary/60 font-semibold uppercase tracking-widest">Sur {{ stats()?.totalExperts ?? 0 }} actifs</div>
+  </div>
+</div>
+
+
+<!-- Expertises en attente d'approbation -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+  <div class="px-6 py-4 border-b border-surface-container-low">
+    <h2 class="text-sm font-bold text-primary uppercase tracking-widest">Expertises en attente d'approbation</h2>
+  </div>
+  @if (expertisesEnAttente().length === 0) {
+    <div class="px-6 py-10 text-center text-on-surface-variant text-sm">
+      <span class="material-symbols-outlined text-3xl mb-2 block">task_alt</span>
+      Aucune expertise en attente d'approbation
+    </div>
+  } @else {
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low/50">
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Référence</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Expert</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Montant estimé</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Recommandation</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Action</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        @for (expertise of expertisesEnAttente(); track expertise.id) {
+          <tr class="hover:bg-slate-50/50 transition-colors">
+            <td class="px-6 py-5 text-sm font-bold text-primary">{{ expertise.claimReference }}</td>
+            <td class="px-6 py-5 text-xs text-on-surface-variant font-medium">{{ expertise.expertNom || 'N/A' }}</td>
+            <td class="px-6 py-5 text-sm font-semibold text-on-surface">{{ expertise.montantEstime || '—' }} DT</td>
+            <td class="px-6 py-5 text-xs text-on-surface-variant">{{ expertise.recommandation || '—' }}</td>
+            <td class="px-6 py-5 text-right flex gap-2 justify-end">
+              <button (click)="validerExpertise(expertise.id)" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all">Approuver</button>
+              <button (click)="refuserExpertise(expertise.id)" class="px-3 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all">Refuser</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+}

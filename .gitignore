@@ -1,0 +1,23 @@
+# OS files
+.DS_Store
+Thumbs.db
+# .gitignore
+.env
+*.env
+application-secrets.properties
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Backend
+backend/target/
+backend/uploads/
+backend/HELP.md
+
+# Frontend
+front/larchitecte-claims/dist/
+front/larchitecte-claims/tmp/
+front/larchitecte-claims/out-tsc/
+front/larchitecte-claims/node_modules/
+front/larchitecte-claims/.angular/cache

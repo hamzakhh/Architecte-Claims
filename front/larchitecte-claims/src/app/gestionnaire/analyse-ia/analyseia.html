@@ -1,0 +1,214 @@
+<div class="mb-10">
+  <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Analyse IA des Sinistres</h1>
+  <p class="text-on-surface-variant mt-1">Pré-évaluation automatique et recommandations par intelligence artificielle.</p>
+</div>
+
+@if (loading()) {
+  <div class="flex items-center justify-center py-20">
+    <span class="material-symbols-outlined animate-spin text-3xl text-primary">progress_activity</span>
+    <span class="ml-3 text-on-surface-variant">Chargement...</span>
+  </div>
+} @else {
+
+  <!-- Stats IA -->
+  @if (stats()) {
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Analyses totales</span>
+        <h3 class="text-2xl font-bold text-primary mt-1">{{ stats()!.totalAnalyses }}</h3>
+      </div>
+      <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Expert requis</span>
+        <h3 class="text-2xl font-bold text-orange-600 mt-1">{{ stats()!.necessitantExpert }}</h3>
+      </div>
+      <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Critiques</span>
+        <h3 class="text-2xl font-bold text-red-600 mt-1">{{ stats()!.critiques }}</h3>
+      </div>
+      <div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-sm">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Modèle IA</span>
+        <h3 class="text-lg font-bold text-primary mt-1">{{ stats()!.modeleIA }}</h3>
+        <span class="text-[10px] {{ stats()!.ollamaEnabled ? 'text-green-600' : 'text-slate-400' }}">{{ stats()!.ollamaEnabled ? 'Ollama connecté' : 'Mode simulation' }}</span>
+      </div>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="bg-error-container/10 p-4 rounded-xl text-on-error-container text-sm mb-6">{{ error() }}</div>
+  }
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left: Claims list -->
+    <div class="lg:col-span-1">
+      <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+        <div class="px-5 py-4 border-b border-surface-container-low">
+          <h2 class="text-xs font-bold text-primary uppercase tracking-widest">Sinistres à analyser</h2>
+        </div>
+        @if (claims().length === 0) {
+          <div class="px-5 py-10 text-center text-on-surface-variant text-sm">
+            <span class="material-symbols-outlined text-3xl mb-2 block">task_alt</span>
+            Aucun sinistre en attente
+          </div>
+        } @else {
+          <div class="divide-y divide-slate-50 max-h-150 overflow-y-auto">
+            @for (claim of claims(); track claim.id) {
+              <button (click)="selectClaim(claim)"
+                class="w-full text-left px-5 py-4 hover:bg-slate-50/50 transition-colors {{ selectedClaim()?.id === claim.id ? 'bg-blue-50 border-l-4 border-l-primary' : '' }}">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-bold text-primary">{{ claim.reference }}</span>
+                  @if (claim.analyseIAId) {
+                    <span class="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">IA</span>
+                  }
+                </div>
+                <p class="text-xs text-on-surface-variant mt-1 line-clamp-2">{{ claim.description }}</p>
+                <div class="flex items-center gap-2 mt-2">
+                  <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{{ claim.categorie }}</span>
+                  <span class="text-[10px] text-slate-400">{{ claim.dateSinistre }}</span>
+                </div>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Right: Analysis detail -->
+    <div class="lg:col-span-2">
+      @if (!selectedClaim()) {
+        <div class="bg-surface-container-lowest rounded-xl p-10 text-center shadow-sm">
+          <span class="material-symbols-outlined text-5xl text-slate-300 mb-3 block">psychology</span>
+          <p class="text-on-surface-variant">Sélectionnez un sinistre pour lancer l'analyse IA</p>
+        </div>
+      } @else if (analysing()) {
+        <div class="bg-surface-container-lowest rounded-xl p-10 text-center shadow-sm">
+          <span class="material-symbols-outlined animate-spin text-4xl text-primary mb-3 block">progress_activity</span>
+          <p class="text-primary font-semibold">Analyse IA en cours...</p>
+          <p class="text-on-surface-variant text-xs mt-1">L'intelligence artificielle analyse le sinistre</p>
+        </div>
+      } @else if (selectedAnalyse()) {
+        <!-- Analysis Results -->
+        <div class="space-y-4">
+          <!-- Header -->
+          <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-sm font-bold text-primary">{{ selectedClaim()!.reference }}</h2>
+                <p class="text-xs text-on-surface-variant mt-1">{{ selectedAnalyse()!.resumeAnalyse }}</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="px-3 py-1.5 rounded-lg text-xs font-bold border {{ getSeveriteClass(selectedAnalyse()!.severite) }}">
+                  <span class="material-symbols-outlined text-sm align-middle mr-1">{{ getSeveriteIcon(selectedAnalyse()!.severite) }}</span>
+                  {{ selectedAnalyse()!.severite }}
+                </span>
+                @if (selectedAnalyse()!.necessiteExpertHumain) {
+                  <span class="px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-100 text-orange-800 border border-orange-200">
+                    <span class="material-symbols-outlined text-sm align-middle mr-1">person</span>
+                    Expert requis
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Score Cards -->
+          <div class="grid grid-cols-3 gap-4">
+            <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm text-center">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Complexité</span>
+              <h3 class="text-3xl font-bold mt-2 {{ getScoreColor(selectedAnalyse()!.scoreComplexite) }}">{{ selectedAnalyse()!.scoreComplexite }}</h3>
+              <div class="w-full bg-slate-100 rounded-full h-2 mt-3">
+                <div class="h-2 rounded-full" [class]="getScoreBarColor(selectedAnalyse()!.scoreComplexite)" [style.width.%]="selectedAnalyse()!.scoreComplexite"></div>
+              </div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm text-center">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Risque</span>
+              <h3 class="text-3xl font-bold mt-2" [class]="getScoreColor(selectedAnalyse()!.scoreRisque)">{{ selectedAnalyse()!.scoreRisque }}</h3>
+              <div class="w-full bg-slate-100 rounded-full h-2 mt-3">
+                <div class="h-2 rounded-full" [class]="getScoreBarColor(selectedAnalyse()!.scoreRisque)" [style.width.%]="selectedAnalyse()!.scoreRisque"></div>
+              </div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm text-center">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Confiance</span>
+              <h3 class="text-3xl font-bold mt-2" [class]="getScoreColor(100 - selectedAnalyse()!.scoreConfiance)">{{ selectedAnalyse()!.scoreConfiance }}</h3>
+              <div class="w-full bg-slate-100 rounded-full h-2 mt-3">
+                <div class="h-2 rounded-full bg-green-500" [style.width.%]="selectedAnalyse()!.scoreConfiance"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Estimation & Recommendation -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Montant estimé</span>
+              @if (selectedAnalyse()!.montantEstime) {
+                <h3 class="text-2xl font-bold text-primary mt-2">{{ selectedAnalyse()!.montantEstime | number:'1.0-0' }} {{ selectedAnalyse()!.devise }}</h3>
+              } @else {
+                <h3 class="text-2xl font-bold text-slate-400 mt-2">—</h3>
+              }
+              <p class="text-xs text-on-surface-variant mt-1">Catégorie détectée : {{ selectedAnalyse()!.categorieDetectee }}</p>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recommandation</span>
+              <p class="text-sm font-semibold text-primary mt-2">{{ selectedAnalyse()!.recommandation }}</p>
+              <p class="text-xs text-on-surface-variant mt-1">{{ selectedAnalyse()!.justification }}</p>
+            </div>
+          </div>
+
+          <!-- Detailed Analysis -->
+          <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">
+            <h3 class="text-xs font-bold text-primary uppercase tracking-widest mb-3">Analyse détaillée</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              @if (selectedAnalyse()!.pointsAttention) {
+                <div class="bg-amber-50 rounded-lg p-4 border border-amber-100">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-amber-600 text-sm">warning</span>
+                    <span class="text-xs font-bold text-amber-800 uppercase tracking-widest">Points d'attention</span>
+                  </div>
+                  <p class="text-xs text-amber-700 whitespace-pre-line">{{ selectedAnalyse()!.pointsAttention }}</p>
+                </div>
+              }
+              @if (selectedAnalyse()!.elementsFraude) {
+                <div class="bg-red-50 rounded-lg p-4 border border-red-100">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-red-600 text-sm">gpp_maybe</span>
+                    <span class="text-xs font-bold text-red-800 uppercase tracking-widest">Éléments fraude</span>
+                  </div>
+                  <p class="text-xs text-red-700 whitespace-pre-line">{{ selectedAnalyse()!.elementsFraude }}</p>
+                </div>
+              }
+              @if (selectedAnalyse()!.recommandationsAction) {
+                <div class="bg-blue-50 rounded-lg p-4 border border-blue-100 md:col-span-2">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-blue-600 text-sm">checklist</span>
+                    <span class="text-xs font-bold text-blue-800 uppercase tracking-widest">Actions recommandées</span>
+                  </div>
+                  <p class="text-xs text-blue-700 whitespace-pre-line">{{ selectedAnalyse()!.recommandationsAction }}</p>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-3">
+            <button (click)="analyserSinistre(selectedClaim()!)"
+              class="px-4 py-2.5 bg-primary text-on-primary rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm">refresh</span>
+              Ré-analyser (approfondie)
+            </button>
+          </div>
+        </div>
+      } @else {
+        <!-- No analysis yet -->
+        <div class="bg-surface-container-lowest rounded-xl p-8 shadow-sm text-center">
+          <span class="material-symbols-outlined text-4xl text-slate-300 mb-3 block">psychology</span>
+          <h3 class="text-sm font-bold text-primary mb-1">{{ selectedClaim()!.reference }}</h3>
+          <p class="text-xs text-on-surface-variant mb-4">Ce sinistre n'a pas encore été analysé par l'IA</p>
+          <button (click)="analyserSinistre(selectedClaim()!)"
+            class="px-5 py-2.5 bg-primary text-on-primary rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center gap-2 mx-auto">
+            <span class="material-symbols-outlined text-sm">smart_toy</span>
+            Lancer l'analyse IA
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}

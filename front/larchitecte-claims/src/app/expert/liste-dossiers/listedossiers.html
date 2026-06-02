@@ -1,0 +1,204 @@
+﻿<div class="mb-10">
+  <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Mes Dossiers</h1>
+  <p class="text-on-surface-variant mt-1">Gestion de toutes vos missions d'expertise.</p>
+</div>
+
+@if (success()) {
+  <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-emerald-700 text-sm mb-6 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">check_circle</span>{{ success() }}
+  </div>
+}
+
+@if (loading()) {
+  <div class="flex items-center justify-center py-20">
+    <span class="material-symbols-outlined animate-spin text-4xl text-primary">progress_activity</span>
+    <span class="ml-3 text-on-surface-variant">Chargement...</span>
+  </div>
+} @else if (error()) {
+  <div class="bg-error-container/20 border border-error-container rounded-xl p-6 text-center">
+    <span class="material-symbols-outlined text-error text-3xl">error</span>
+    <p class="text-error mt-2">{{ error() }}</p>
+    <button class="mt-4 px-6 py-2 bg-primary text-on-primary rounded-lg text-sm font-semibold" (click)="loadData()">Réessayer</button>
+  </div>
+} @else {
+
+<!-- Search & Filter -->
+<div class="flex gap-3 mb-6">
+  <div class="relative flex-1">
+    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+    <input (input)="onSearchInput($event)" class="bg-surface-container-low border-none rounded-lg pl-9 pr-4 py-2.5 text-xs w-full" placeholder="Rechercher par référence, assuré, type..." type="text" />
+  </div>
+  <div class="flex bg-surface-container-low rounded-lg overflow-hidden">
+    <button (click)="setStatusFilter('')" class="px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all" [class.bg-primary]="filterStatut() === ''" [class.text-on-primary]="filterStatut() === ''" [class.text-slate-500]="filterStatut() !== ''">Tous</button>
+    <button (click)="setStatusFilter('EXPERTISE')" class="px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all" [class.bg-blue-600]="filterStatut() === 'EXPERTISE'" [class.text-white]="filterStatut() === 'EXPERTISE'" [class.text-slate-500]="filterStatut() !== 'EXPERTISE'">Expertise</button>
+    <button (click)="setStatusFilter('VALIDE')" class="px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all" [class.bg-emerald-600]="filterStatut() === 'VALIDE'" [class.text-white]="filterStatut() === 'VALIDE'" [class.text-slate-500]="filterStatut() !== 'VALIDE'">Validé</button>
+    <button (click)="setStatusFilter('CLOTURE')" class="px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all" [class.bg-slate-600]="filterStatut() === 'CLOTURE'" [class.text-white]="filterStatut() === 'CLOTURE'" [class.text-slate-500]="filterStatut() !== 'CLOTURE'">Clôturé</button>
+  </div>
+</div>
+
+<!-- Cases Table -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+  <div class="px-6 py-4 border-b border-surface-container-low flex justify-between items-center">
+    <h2 class="text-sm font-bold text-primary uppercase tracking-widest">Missions assignées</h2>
+    <span class="text-xs text-slate-500">{{ filteredClaims().length }} dossiers</span>
+  </div>
+  @if (filteredClaims().length === 0) {
+    <div class="p-12 text-center text-on-surface-variant">
+      <span class="material-symbols-outlined text-5xl text-slate-300">folder_off</span>
+      <p class="mt-3 text-sm">Aucun dossier trouvé</p>
+    </div>
+  } @else {
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low/50">
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Référence</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Assuré</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Type</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Gestionnaire</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Date</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Statut</th>
+          <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        @for (claim of filteredClaims(); track claim.id) {
+          <tr class="hover:bg-slate-50/50 transition-colors cursor-pointer" [class.bg-primary/5]="selectedClaim()?.id === claim.id">
+            <td class="px-6 py-5 text-sm font-bold text-primary" (click)="openDetail(claim)">{{ claim.reference || ('#' + claim.id.substring(0, 8)) }}</td>
+            <td class="px-6 py-5 text-xs text-on-surface-variant font-medium" (click)="openDetail(claim)">{{ claim.assureNom || 'N/A' }}</td>
+            <td class="px-6 py-5 text-xs text-on-surface-variant" (click)="openDetail(claim)">{{ getTypeLabel(claim.type) }}</td>
+            <td class="px-6 py-5 text-xs text-on-surface-variant" (click)="openDetail(claim)">{{ claim.gestionnaireNom || 'N/A' }}</td>
+            <td class="px-6 py-5 text-xs text-slate-500" (click)="openDetail(claim)">{{ formatDate(claim.dateSinistre) }}</td>
+            <td class="px-6 py-5" (click)="openDetail(claim)"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ getStatutClass(claim.statut) }}">{{ getStatutLabel(claim.statut) }}</span></td>
+            <td class="px-6 py-5 text-right">
+              <div class="flex gap-2 justify-end">
+                <button (click)="openDetail(claim)" class="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors inline-flex" title="Voir détail">
+                  <span class="material-symbols-outlined text-sm">visibility</span>
+                </button>
+                <a [routerLink]="['/expert/rapport-expertise']" [queryParams]="{claimId: claim.id}" class="p-1.5 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-200 transition-colors inline-flex" title="Rédiger rapport">
+                  <span class="material-symbols-outlined text-sm">edit_note</span>
+                </a>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<!-- Detail Panel -->
+@if (selectedClaim()) {
+  <div class="mt-6 bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-surface-container-low flex justify-between items-center">
+      <h2 class="text-sm font-bold text-primary uppercase tracking-widest">Détail du dossier — {{ selectedClaim()!.reference || ('#' + selectedClaim()!.id.substring(0, 8)) }}</h2>
+      <button (click)="closeDetail()" class="p-1.5 bg-surface-container-low text-on-surface-variant rounded-lg hover:bg-surface-container transition-colors inline-flex">
+        <span class="material-symbols-outlined text-sm">close</span>
+      </button>
+    </div>
+    <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Claim Info -->
+      <div class="space-y-4">
+        <div>
+          <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Assuré</p>
+          <p class="text-sm font-medium text-on-surface">{{ selectedClaim()!.assureNom || 'N/A' }}</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Type de sinistre</p>
+          <p class="text-sm text-on-surface-variant">{{ getTypeLabel(selectedClaim()!.type) }}</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Date du sinistre</p>
+          <p class="text-sm text-on-surface-variant">{{ formatDateTime(selectedClaim()!.dateSinistre) }}</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Lieu</p>
+          <p class="text-sm text-on-surface-variant">{{ selectedClaim()!.lieu || 'Non renseigné' }}</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Estimation assuré</p>
+          <p class="text-sm text-on-surface-variant">{{ selectedClaim()!.estimation ? selectedClaim()!.estimation + ' DT' : 'Non renseignée' }}</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1">Description</p>
+          <p class="text-xs text-on-surface-variant leading-relaxed">{{ selectedClaim()!.description }}</p>
+        </div>
+      </div>
+
+      <!-- Documents -->
+      <div>
+        <h3 class="text-xs font-bold text-primary uppercase tracking-widest mb-3">Pièces jointes</h3>
+        @if (selectedClaim()?.piecesJointes?.length) {
+          <div class="space-y-2">
+            @for (doc of selectedClaim()!.piecesJointes; track doc) {
+              <div class="flex items-center gap-3 p-3 bg-surface-container-low rounded-lg">
+                <span class="material-symbols-outlined text-primary text-sm">description</span>
+                <div class="flex-1"><p class="text-xs font-medium text-on-surface">{{ doc }}</p></div>
+                <button (click)="downloadFile(doc)" class="p-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors inline-flex" title="Télécharger">
+                  <span class="material-symbols-outlined text-sm">download</span>
+                </button>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="text-xs text-slate-400 text-center py-4">Aucun document joint</p>
+        }
+      </div>
+
+      <!-- Expertises -->
+      <div>
+        <h3 class="text-xs font-bold text-primary uppercase tracking-widest mb-3">Expertises</h3>
+        @if (detailLoading()) {
+          <div class="flex items-center justify-center py-4">
+            <span class="material-symbols-outlined animate-spin text-primary">progress_activity</span>
+          </div>
+        } @else if (claimExpertises().length === 0) {
+          <p class="text-xs text-slate-400 text-center py-4">Aucune expertise enregistrée</p>
+        } @else {
+          <div class="space-y-2">
+            @for (exp of claimExpertises(); track exp.id) {
+              <div class="p-3 bg-surface-container-low rounded-lg space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-medium text-on-surface">{{ exp.claimReference }}</span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase {{ getExpertiseStatutClass(exp.statut) }}">{{ getExpertiseStatutLabel(exp.statut) }}</span>
+                </div>
+                @if (exp.conclusion) {
+                  <p class="text-[11px] text-on-surface-variant">{{ exp.conclusion }}</p>
+                }
+                @if (exp.montantEstime) {
+                  <p class="text-[11px] text-emerald-600 font-medium">Estimation : {{ exp.montantEstime }} DT</p>
+                }
+                @if (exp.recommandation) {
+                  <p class="text-[11px] text-slate-500">Recommandation : {{ exp.recommandation }}</p>
+                }
+                @if (exp.piecesJointes?.length) {
+                  <div class="mt-2 pt-2 border-t border-surface-container">
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-1.5">Documents de l'expert</p>
+                    <div class="space-y-1">
+                      @for (doc of exp.piecesJointes!; track doc) {
+                        <div class="flex items-center gap-2 p-1.5 bg-surface-container-lowest rounded">
+                          <span class="material-symbols-outlined text-blue-600 text-xs">{{ getFileIcon(doc) }}</span>
+                          <p class="text-[11px] text-on-surface flex-1 truncate">{{ doc }}</p>
+                          <button (click)="downloadFile(doc)" class="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors inline-flex shrink-0" title="Télécharger">
+                            <span class="material-symbols-outlined text-xs">download</span>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+        <div class="mt-4">
+          <a [routerLink]="['/expert/rapport-expertise']" [queryParams]="{claimId: selectedClaim()!.id}"
+             class="w-full block text-center bg-primary text-on-primary py-2.5 rounded-lg text-xs font-semibold hover:opacity-90 transition-all">
+            <span class="material-symbols-outlined text-xs align-middle mr-1">edit_note</span>Rédiger le rapport
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+}

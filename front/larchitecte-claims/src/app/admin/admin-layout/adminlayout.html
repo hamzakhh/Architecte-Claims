@@ -1,0 +1,63 @@
+﻿<!-- SideNavBar -->
+<aside class="h-screen w-72 fixed left-0 top-0 flex flex-col py-6 border-r border-slate-100 bg-slate-50 text-sm font-medium tracking-wide z-50">
+  <div class="px-8 mb-10">
+    <h1 class="text-lg font-black text-blue-900 uppercase tracking-widest">L'Architecte</h1>
+    <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-widest">Administration</p>
+  </div>
+  <div class="px-6 mb-8">
+    <div class="flex items-center gap-3 p-3 bg-white rounded-xl shadow-sm">
+      <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center"><span class="material-symbols-outlined text-primary">admin_panel_settings</span></div>
+      <div><p class="text-blue-900 font-bold">{{ auth.userName() }}</p><p class="text-[10px] text-slate-500 uppercase tracking-tighter">Administrateur</p></div>
+    </div>
+  </div>
+  <nav class="flex-1 space-y-1 px-4 overflow-y-auto">
+    <p class="px-4 pt-2 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Utilisateurs & Habilitations</p>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/admin/utilisateurs" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">people</span><span>Utilisateurs</span>
+    </a>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/admin/experts" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">engineering</span><span>Experts</span>
+    </a>
+
+    <p class="px-4 pt-4 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Configuration</p>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/admin/gestion-technique" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">terminal</span><span>Gestion Technique</span>
+    </a>
+
+    <p class="px-4 pt-4 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Supervision & Dashboards</p>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/admin/tableau-de-bord" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">dashboard</span><span>Tableau de bord</span>
+    </a>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/admin/rapports" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">analytics</span><span>Rapports & Analytics</span>
+    </a>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/admin/monitoring-ia" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">smart_toy</span><span>Monitoring IA</span>
+    </a>
+    <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors" routerLink="/admin/surveillance-fraude" routerLinkActive="bg-white text-blue-900 shadow-sm font-semibold">
+      <span class="material-symbols-outlined">shield</span><span>Surveillance Fraude</span>
+    </a>
+
+  </nav>
+  <div class="px-4 pt-2 border-t border-slate-100">
+    <button class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-100 transition-colors w-full text-left" (click)="logout()">
+      <span class="material-symbols-outlined">logout</span><span>Déconnexion</span>
+    </button>
+  </div>
+</aside>
+<!-- Main Wrapper -->
+<main class="pl-72 min-h-screen flex flex-col">
+  <header class="w-full sticky top-0 z-40 bg-white/80 backdrop-blur-md flex justify-between items-center px-8 h-16 shadow-sm shadow-blue-900/5">
+    <div class="flex items-center gap-6">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-blue-900">Administration</h2>
+      <div class="relative flex items-center"><span class="material-symbols-outlined absolute left-3 text-slate-400 text-sm">search</span><input class="bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-1.5 text-xs focus:ring-2 focus:ring-primary/20 w-64 transition-all" placeholder="Rechercher..." type="text" /></div>
+    </div>
+    <div class="flex items-center gap-4">
+      <app-notification-bell />
+      <div class="flex items-center gap-3 pl-4 border-l border-slate-100">
+        <div class="text-right"><p class="text-xs font-bold text-primary">{{ auth.userName() }}</p><p class="text-[10px] text-slate-500 uppercase tracking-tighter">Administrateur</p></div>
+      </div>
+    </div>
+  </header>
+  <div class="flex-1 p-8"><router-outlet /></div>
+</main>

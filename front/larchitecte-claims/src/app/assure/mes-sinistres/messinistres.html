@@ -1,0 +1,150 @@
+﻿<div class="mb-10">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Mes Sinistres</h1>
+      <p class="text-on-surface-variant mt-1">Historique complet de vos déclarations de sinistres.</p>
+    </div>
+    <a class="bg-primary text-on-primary px-6 py-3 rounded-lg font-semibold text-sm flex items-center gap-2 hover:opacity-90 transition-all" routerLink="/assure/declarer-sinistre">
+      <span class="material-symbols-outlined text-sm">add</span>Déclarer un sinistre
+    </a>
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="flex justify-center items-center h-64">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+} @else if (error()) {
+  <div class="bg-error-container text-on-error-container p-4 rounded-lg">
+    <p class="font-medium">{{ error() }}</p>
+  </div>
+} @else {
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-4 gap-4 mb-8">
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Total</p>
+          <p class="text-2xl font-black text-primary mt-1">{{ totalClaims() }}</p>
+        </div>
+        <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+          <span class="material-symbols-outlined text-blue-600">description</span>
+        </div>
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">En cours</p>
+          <p class="text-2xl font-black text-amber-600 mt-1">{{ enCoursCount() }}</p>
+        </div>
+        <div class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center">
+          <span class="material-symbols-outlined text-amber-600">hourglass_empty</span>
+        </div>
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Validés</p>
+          <p class="text-2xl font-black text-emerald-600 mt-1">{{ validesCount() }}</p>
+        </div>
+        <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
+          <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+        </div>
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Clôturés</p>
+          <p class="text-2xl font-black text-slate-500 mt-1">{{ cloturesCount() }}</p>
+        </div>
+        <div class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center">
+          <span class="material-symbols-outlined text-slate-500">lock</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search + Filters -->
+  <div class="flex flex-col sm:flex-row gap-4 mb-6">
+    <div class="relative flex-1">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+      <input
+        type="text"
+        placeholder="Rechercher par référence, type, statut..."
+        class="w-full pl-10 pr-4 py-2.5 bg-surface-container-lowest rounded-lg text-sm border-none outline-none focus:ring-2 focus:ring-primary/30"
+        (input)="onSearch($event)" />
+    </div>
+    <div class="flex gap-2">
+      <button
+        class="px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors"
+        [class]="selectedFilter() === 'tous' ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'"
+        (click)="setFilter('tous')">
+        Tous
+      </button>
+      <button
+        class="px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors"
+        [class]="selectedFilter() === 'en_cours' ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'"
+        (click)="setFilter('en_cours')">
+        En cours
+      </button>
+      <button
+        class="px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors"
+        [class]="selectedFilter() === 'valides' ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'"
+        (click)="setFilter('valides')">
+        Validés
+      </button>
+      <button
+        class="px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors"
+        [class]="selectedFilter() === 'clotures' ? 'bg-primary text-on-primary' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'"
+        (click)="setFilter('clotures')">
+        Clôturés
+      </button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  @if (filteredClaims().length === 0) {
+    <div class="bg-surface-container-lowest rounded-xl p-12 text-center">
+      <span class="material-symbols-outlined text-5xl text-slate-300 mb-3 block">folder_off</span>
+      <p class="text-on-surface-variant font-medium">Aucun sinistre trouvé</p>
+      <p class="text-xs text-slate-400 mt-1">Essayez un autre filtre ou terme de recherche</p>
+    </div>
+  } @else {
+    <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-surface-container-low/50">
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Référence</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Type</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Date sinistre</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Lieu</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Expert</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Statut</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          @for (claim of filteredClaims(); track claim.id) {
+            <tr class="hover:bg-slate-50/50 transition-colors cursor-pointer" (click)="navigateToDetail(claim.id)">
+              <td class="px-6 py-5 text-sm font-bold text-primary">#{{ claim.id.substring(0, 8) }}</td>
+              <td class="px-6 py-5">
+                <span class="text-xs font-semibold text-on-surface">{{ getTypeLabel(claim.type) }}</span>
+              </td>
+              <td class="px-6 py-5 text-xs text-slate-500">{{ formatDate(claim.dateSinistre) }}</td>
+              <td class="px-6 py-5 text-xs text-on-surface-variant max-w-50 truncate">{{ claim.lieu || 'Non spécifié' }}</td>
+              <td class="px-6 py-5 text-xs text-on-surface-variant">{{ claim.expertId ? 'Expert #' + claim.expertId.substring(0, 8) : 'Non assigné' }}</td>
+              <td class="px-6 py-5 text-right">
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider {{ getStatusColor(claim.statut) }}">
+                  <span class="material-symbols-outlined text-xs">{{ getStatusIcon(claim.statut) }}</span>
+                  {{ getStatusLabel(claim.statut) }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+}

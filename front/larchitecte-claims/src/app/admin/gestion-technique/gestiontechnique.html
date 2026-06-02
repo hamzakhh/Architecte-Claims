@@ -1,0 +1,119 @@
+<div class="mb-10">
+  <h1 class="text-[1.5rem] font-semibold text-primary tracking-tight">Gestion Technique — Logs Système</h1>
+  <p class="text-on-surface-variant mt-1">Journal complet des opérations, actions utilisateurs et événements système.</p>
+</div>
+
+<!-- Loading -->
+@if (loading()) {
+  <div class="flex items-center justify-center py-20">
+    <span class="material-symbols-outlined animate-spin text-4xl text-primary">progress_activity</span>
+    <span class="ml-3 text-on-surface-variant">Chargement des logs...</span>
+  </div>
+}
+
+<!-- Error -->
+@if (error()) {
+  <div class="bg-error-container text-on-error-container p-4 rounded-xl mb-6">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined">error</span>
+      <span class="text-sm font-medium">{{ error() }}</span>
+    </div>
+  </div>
+}
+
+@if (!loading()) {
+  <!-- Filters -->
+  <div class="bg-surface-container-lowest rounded-xl p-6 mb-6 shadow-sm">
+    <div class="flex items-center gap-2 mb-4">
+      <span class="material-symbols-outlined text-primary text-sm">filter_list</span>
+      <h2 class="text-xs font-bold text-primary uppercase tracking-widest">Filtres</h2>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- Search -->
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+        <input [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" class="w-full bg-white border border-slate-200 rounded-lg pl-10 pr-4 py-2.5 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="Rechercher dans les logs..." />
+      </div>
+      <!-- Action filter -->
+      <select [ngModel]="filterAction()" (ngModelChange)="filterAction.set($event)" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+        <option value="">Toutes les actions</option>
+        @for (action of uniqueActions(); track action) {
+          <option [value]="action">{{ getActionLabel(action) }}</option>
+        }
+      </select>
+      <!-- Role filter -->
+      <select [ngModel]="filterRole()" (ngModelChange)="filterRole.set($event)" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+        <option value="">Tous les rôles</option>
+        @for (role of uniqueRoles(); track role) {
+          <option [value]="role">{{ getRoleLabel(role) }}</option>
+        }
+      </select>
+      <!-- Reset -->
+      <button (click)="resetFilters()" class="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-200 transition-colors">
+        <span class="material-symbols-outlined text-sm">restart_alt</span>Réinitialiser
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/10 shadow-sm flex items-center gap-4">
+      <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center"><span class="material-symbols-outlined text-primary text-sm">list_alt</span></div>
+      <div><span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total entrées</span><p class="text-xl font-bold text-primary">{{ logs().length }}</p></div>
+    </div>
+    <div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/10 shadow-sm flex items-center gap-4">
+      <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center"><span class="material-symbols-outlined text-amber-600 text-sm">filter_list</span></div>
+      <div><span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Résultats filtrés</span><p class="text-xl font-bold text-amber-600">{{ filteredLogs().length }}</p></div>
+    </div>
+    <div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/10 shadow-sm flex items-center gap-4">
+      <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center"><span class="material-symbols-outlined text-emerald-600 text-sm">category</span></div>
+      <div><span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Types d'actions</span><p class="text-xl font-bold text-emerald-600">{{ uniqueActions().length }}</p></div>
+    </div>
+  </div>
+
+  <!-- Logs table -->
+  <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+    <div class="px-6 py-4 border-b border-surface-container-low flex justify-between items-center">
+      <h2 class="text-sm font-bold text-primary uppercase tracking-widest">Journal des événements</h2>
+      <button (click)="loadData()" class="flex items-center gap-1 text-xs font-bold text-primary hover:text-on-tertiary-container transition-colors tracking-widest">
+        <span class="material-symbols-outlined text-sm">refresh</span>Actualiser
+      </button>
+    </div>
+
+    @if (filteredLogs().length === 0) {
+      <div class="p-10 text-center text-on-surface-variant">
+        <span class="material-symbols-outlined text-4xl mb-2">inbox</span>
+        <p class="text-sm">Aucun log trouvé</p>
+      </div>
+    } @else {
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-surface-container-low/50">
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Action</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Détails</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Utilisateur</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Rôle</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Cible</th>
+            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Date / Heure</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50">
+          @for (log of filteredLogs(); track log.id) {
+            <tr class="hover:bg-slate-50/50 transition-colors">
+              <td class="px-6 py-4">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider {{ getActionClass(log.action) }}">{{ getActionLabel(log.action) }}</span>
+              </td>
+              <td class="px-6 py-4 text-xs text-on-surface max-w-60 truncate">{{ log.details }}</td>
+              <td class="px-6 py-4 text-xs font-medium text-on-surface">{{ log.utilisateur }}</td>
+              <td class="px-6 py-4">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ getRoleClass(log.role) }}">{{ getRoleLabel(log.role) }}</span>
+              </td>
+              <td class="px-6 py-4 text-xs text-on-surface-variant">{{ log.cible }}</td>
+              <td class="px-6 py-4 text-xs text-slate-500 text-right whitespace-nowrap">{{ formatDate(log.timestamp) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+}

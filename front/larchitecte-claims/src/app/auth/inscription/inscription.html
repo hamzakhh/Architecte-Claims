@@ -1,0 +1,88 @@
+<main class="flex-grow flex items-center justify-center p-6 lg:p-12">
+  <div class="w-full max-w-4xl flex flex-col md:flex-row shadow-[0px_20px_40px_rgba(2,36,72,0.06)] rounded-xl overflow-hidden bg-surface-container-lowest">
+    <!-- Left Side: Visual/Branding -->
+    <div class="hidden md:flex md:w-5/12 bg-primary relative p-12 flex-col justify-between overflow-hidden">
+      <div class="z-10">
+        <div class="text-white text-2xl font-extrabold tracking-tight mb-8">L'Architecte</div>
+        <h1 class="text-white text-4xl font-bold leading-tight mb-4 tracking-tighter">Votre sécurité,<br/>notre engagement.</h1>
+        <p class="text-on-primary-container text-lg leading-relaxed">Rejoignez la plateforme de gestion de sinistres la plus avancée du secteur architectural.</p>
+      </div>
+      <div class="absolute -bottom-16 -right-16 w-64 h-64 bg-primary-container rounded-full opacity-20"></div>
+      <div class="z-10 flex items-center gap-3 text-white/60">
+        <span class="material-symbols-outlined text-sm">verified_user</span>
+        <span class="text-xs tracking-widest uppercase">Système sécurisé par cryptage AES-256</span>
+      </div>
+    </div>
+    <!-- Right Side: Registration Form -->
+    <div class="w-full md:w-7/12 p-8 lg:p-12 flex flex-col">
+      <!-- Progress Ribbon -->
+      <div class="w-full h-1 bg-surface-container-low rounded-full mb-10 relative">
+        <div class="absolute top-0 left-0 w-1/2 h-full bg-primary rounded-full"></div>
+        <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-surface-container-lowest px-4 py-1 rounded-full shadow-sm border border-outline-variant/10">
+          <span class="text-[10px] font-bold uppercase tracking-[0.1em] text-primary">Étape 1 sur 2</span>
+        </div>
+      </div>
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-primary tracking-tight mb-2">Création de votre compte</h2>
+        <p class="text-on-surface-variant text-sm">Veuillez renseigner vos informations pour débuter.</p>
+      </div>
+      <form class="space-y-5" (ngSubmit)="onSubmit()" #regForm="ngForm">
+        @if (errorMessage) {
+          <div class="p-3 bg-error-container/10 border border-error/20 rounded-lg flex items-center gap-3">
+            <span class="material-symbols-outlined text-error text-[20px]">error</span>
+            <span class="text-error text-sm font-medium">{{ errorMessage }}</span>
+          </div>
+        }
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Prénom</label>
+            <input class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/10 focus:bg-surface-container-lowest transition-all text-on-surface placeholder:text-outline" placeholder="Jean" type="text" [(ngModel)]="prenom" name="prenom" />
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Nom</label>
+            <input class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/10 focus:bg-surface-container-lowest transition-all text-on-surface placeholder:text-outline" placeholder="Dupont" type="text" [(ngModel)]="nom" name="nom" />
+          </div>
+        </div>
+        <div class="space-y-1.5">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Email</label>
+          <input class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/10 focus:bg-surface-container-lowest transition-all text-on-surface placeholder:text-outline" placeholder="jean.dupont@cabinet.fr" type="email" [(ngModel)]="email" name="email" />
+        </div>
+        <div class="space-y-1.5">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Téléphone</label>
+          <input class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/10 focus:bg-surface-container-lowest transition-all text-on-surface placeholder:text-outline" placeholder="01 23 45 67 89" type="tel" [(ngModel)]="telephone" name="tel" />
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Mot de passe</label>
+            <input class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/10 focus:bg-surface-container-lowest transition-all text-on-surface placeholder:text-outline" placeholder="••••••••" type="password" [(ngModel)]="password" name="password" />
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Confirmer mot de passe</label>
+            <input class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/10 focus:bg-surface-container-lowest transition-all text-on-surface placeholder:text-outline" placeholder="••••••••" type="password" [(ngModel)]="confirmPassword" name="confirmPassword" />
+          </div>
+        </div>
+        <div class="pt-4 flex flex-col gap-6">
+          <button class="w-full bg-primary text-white font-semibold py-4 rounded-lg shadow-lg hover:shadow-primary/20 transition-all flex items-center justify-center gap-2 group" type="submit" [disabled]="isLoading">
+            @if (isLoading) {
+              <span class="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+              <span>Inscription en cours...</span>
+            } @else {
+              <span>Suivant</span>
+              <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            }
+          </button>
+          <div class="flex flex-col items-center gap-3">
+            <a class="text-sm text-secondary hover:text-primary font-medium transition-colors" routerLink="/auth/connexion">Déjà inscrit ? Se connecter</a>
+            <div class="flex items-center gap-2 text-[11px] text-on-surface-variant/60 font-medium">
+              <span class="material-symbols-outlined text-[14px]">lock</span>
+              <span>Vos données sont protégées par le RGPD</span>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+<footer class="p-8 text-center">
+  <p class="text-xs text-on-surface-variant/40 tracking-widest uppercase">© 2024 L'Architecte — Solution de gestion assurancielle</p>
+</footer>
