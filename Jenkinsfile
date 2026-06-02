@@ -1,114 +1,85 @@
 pipeline {
     agent any
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '10'))
-        timeout(time: 30, unit: 'MINUTES')
-        disableConcurrentBuilds()
-    }
+
     environment {
-        DOCKERHUB_USER  = "hamzaaaaaa"
-        BACKEND_IMAGE   = "hamzaaaaaa/larchitecte-backend"
-        FRONTEND_IMAGE  = "hamzaaaaaa/larchitecte-frontend"
-        COMPOSE_FILE    = "docker-compose.yml"
-        BACKEND_DIR     = "backend"
-        FRONTEND_DIR    = "front/larchitecte-claims"
-        IMAGE_TAG       = "${BUILD_NUMBER}"
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        IMAGE_BACKEND = 'hamzaaaaaa/larchitecte-backend'
+        IMAGE_FRONTEND = 'hamzaaaaaa/larchitecte-frontend'
     }
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                // ✅ Direct clone — no SCMFileSystem, no Lightweight checkout bug
-                git branch: 'main',
-                    credentialsId: 'github-credentials', // remove this line if repo is public
-                    url: 'https://github.com/hamzakhh/Architecte-Claims.git'
+                git url: 'https://github.com/hamzakhh/Architecte-Claims.git', branch: 'main'
                 echo "Build #${BUILD_NUMBER}"
             }
         }
 
         stage('Tests Java') {
             steps {
-                dir("${BACKEND_DIR}") {
+                dir('backend') {
                     sh 'mvn test -B'
                 }
             }
             post {
                 always {
-                    junit allowEmptyResults: true,
-                          testResults: "${BACKEND_DIR}/target/surefire-reports/**/*.xml"
+                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
                 }
             }
         }
 
-       stage('Tests Angular') {
-    steps {
-        dir('front/larchitecte-claims') {
-            sh 'npm install'
-            sh 'npm run build -- --configuration production'
-        }
-    }
-}
+        stage('Build Angular') {
+            steps {
+                dir('front/larchitecte-claims') {
+                    sh 'npm install'
+                    sh 'npm run build -- --configuration production'
+                }
+            }
         }
 
         stage('Docker Build') {
             steps {
-                sh "docker compose -f ${COMPOSE_FILE} build --no-cache"
+                sh '''
+                    echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                    docker build -t $IMAGE_BACKEND ./backend
+                    docker build -t $IMAGE_FRONTEND ./front/larchitecte-claims
+                '''
             }
         }
 
         stage('Docker Push') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-credentials',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                    sh """
-                        docker tag ${BACKEND_IMAGE}:latest  ${BACKEND_IMAGE}:${IMAGE_TAG}
-                        docker tag ${FRONTEND_IMAGE}:latest ${FRONTEND_IMAGE}:${IMAGE_TAG}
-                        docker push ${BACKEND_IMAGE}:latest
-                        docker push ${BACKEND_IMAGE}:${IMAGE_TAG}
-                        docker push ${FRONTEND_IMAGE}:latest
-                        docker push ${FRONTEND_IMAGE}:${IMAGE_TAG}
-                    """
-                    sh 'docker logout'
-                }
+                sh '''
+                    docker push $IMAGE_BACKEND
+                    docker push $IMAGE_FRONTEND
+                '''
             }
         }
 
         stage('Deploy') {
             steps {
-                sh """
-                    docker compose -f ${COMPOSE_FILE} up -d --force-recreate
-                    echo "Attente du démarrage des services (40s)..."
-                    sleep 40
-                """
-            }
-        }
-
-        stage('Smoke Tests') {
-            steps {
-                retry(3) {
-                    sh '''
-                        curl -sf http://localhost:80   || (echo "ERREUR: Frontend KO"  && exit 1)
-                        curl -sf http://localhost:8081/actuator/health || (echo "ERREUR: Backend KO" && exit 1)
-                        echo "Tous les services sont UP"
-                    '''
-                }
+                sh '''
+                    kubectl rollout restart deployment larchitecte-backend
+                    kubectl rollout restart deployment larchitecte-frontend
+                    kubectl rollout restart deployment larchitecte-mongodb
+                '''
             }
         }
     }
 
     post {
         success {
-            echo "✅ Build #${BUILD_NUMBER} reussi - images pushees sur Docker Hub"
+            echo '✅ Build réussi'
         }
         failure {
-            echo "❌ Build #${BUILD_NUMBER} echoue - logs des conteneurs :"
-            sh "docker compose -f ${COMPOSE_FILE} logs --tail=80 || true"
+            echo '❌ Build échoué'
         }
         always {
-            sh 'docker image prune -f || true'
+            sh 'docker image prune -f'
         }
     }
 }
