@@ -52,6 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/reimbursements/stripe/webhook").permitAll() // Webhook Stripe (appelé par Stripe sans auth)
                         .requestMatchers("/api/files/**").authenticated() // Endpoints de fichiers nécessitent une authentification
                         .requestMatchers("/error").permitAll() // Endpoint d'erreur Spring Boot
+                        .requestMatchers("/actuator/**").permitAll() // Endpoints actuator (pour monitoring)
                         .anyRequest().authenticated() // Toutes les autres requêtes nécessitent une authentification
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); // Ajout du filtre JWT
