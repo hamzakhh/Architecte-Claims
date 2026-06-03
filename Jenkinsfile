@@ -61,14 +61,15 @@ pipeline {
         }
 
         stage('Deploy') {
-            steps {
-                sh '''
-                    kubectl rollout restart deployment larchitecte-backend
-                    kubectl rollout restart deployment larchitecte-frontend
-                    kubectl rollout restart deployment larchitecte-mongodb
-                '''
-            }
-        }
+    steps {
+        sh """
+            kubectl rollout restart deployment larchitecte-backend --namespace default
+            kubectl rollout restart deployment larchitecte-frontend --namespace default
+            kubectl rollout status deployment/larchitecte-backend --namespace default
+            kubectl rollout status deployment/larchitecte-frontend --namespace default
+        """
+    }
+}
     }
 
     post {
