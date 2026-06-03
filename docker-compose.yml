@@ -33,7 +33,7 @@ services:
     image: hamzaaaaaa/larchitecte-frontend:latest
     container_name: larchitecte-frontend
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       - backend
     restart: unless-stopped
