@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        IMAGE_BACKEND = 'hamzaaaaaa/larchitecte-backend'
-        IMAGE_FRONTEND = 'hamzaaaaaa/larchitecte-frontend'
+        IMAGE_BACKEND          = 'hamzaaaaaa/larchitecte-backend'
+        IMAGE_FRONTEND         = 'hamzaaaaaa/larchitecte-frontend'
     }
 
     options {
@@ -12,9 +12,11 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+
+        stage('Checkout SCM') {
             steps {
-                git url: 'https://github.com/hamzakhh/Architecte-Claims.git', branch: 'main'
+                git url: 'https://github.com/hamzakhh/Architecte-Claims.git',
+                    branch: 'main'
                 echo "Build #${BUILD_NUMBER}"
             }
         }
@@ -27,15 +29,23 @@ pipeline {
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
+                    junit allowEmptyResults: true,
+                          testResults: '**/target/surefire-reports/*.xml'
                 }
             }
         }
 
         stage('Build Angular') {
+            // FIX : agent Docker Linux — évite le bug UNC path de Windows CMD
+            agent {
+                docker {
+                    image 'node:20-alpine'
+                    reuseNode true
+                }
+            }
             steps {
                 dir('front/larchitecte-claims') {
-                    sh 'npm install'
+                    sh 'npm ci --prefer-offline'
                     sh 'npm run build -- --configuration production'
                 }
             }
@@ -44,8 +54,9 @@ pipeline {
         stage('Docker Build') {
             steps {
                 sh '''
-                    echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
-                    docker build -t $IMAGE_BACKEND ./backend
+                    echo $DOCKERHUB_CREDENTIALS_PSW | docker login \
+                        -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                    docker build -t $IMAGE_BACKEND  ./backend
                     docker build -t $IMAGE_FRONTEND ./front/larchitecte-claims
                 '''
             }
@@ -61,26 +72,20 @@ pipeline {
         }
 
         stage('Deploy') {
-    steps {
-        sh """
-            kubectl rollout restart deployment larchitecte-backend --namespace default
-            kubectl rollout restart deployment larchitecte-frontend --namespace default
-            kubectl rollout status deployment/larchitecte-backend --namespace default
-            kubectl rollout status deployment/larchitecte-frontend --namespace default
-        """
-    }
-}
+            steps {
+                sh """
+                    kubectl rollout restart deployment larchitecte-backend  --namespace default
+                    kubectl rollout restart deployment larchitecte-frontend --namespace default
+                    kubectl rollout status  deployment/larchitecte-backend  --namespace default
+                    kubectl rollout status  deployment/larchitecte-frontend --namespace default
+                """
+            }
+        }
     }
 
     post {
-        success {
-            echo '✅ Build réussi'
-        }
-        failure {
-            echo '❌ Build échoué'
-        }
-        always {
-            sh 'docker image prune -f'
-        }
+        success { echo 'Build reussi' }
+        failure { echo 'Build echoue' }
+        always  { sh 'docker image prune -f' }
     }
 }
