@@ -1,18 +1,14 @@
 pipeline {
     agent any
-
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         IMAGE_BACKEND          = 'hamzaaaaaa/larchitecte-backend'
         IMAGE_FRONTEND         = 'hamzaaaaaa/larchitecte-frontend'
     }
-
     options {
         timeout(time: 30, unit: 'MINUTES')
     }
-
     stages {
-
         stage('Checkout SCM') {
             steps {
                 git url: 'https://github.com/hamzakhh/Architecte-Claims.git',
@@ -20,7 +16,6 @@ pipeline {
                 echo "Build #${BUILD_NUMBER}"
             }
         }
-
         stage('Tests Java') {
             steps {
                 dir('backend') {
@@ -34,15 +29,14 @@ pipeline {
                 }
             }
         }
-
         stage('Build Angular') {
-           steps {
-              bat '''
-                 wsl bash -c "cd /home/hamza/.jenkins/workspace/test/front/larchitecte-claims && npm ci && npm run build -- --configuration production"
-              '''
+            steps {
+                dir('front/larchitecte-claims') {
+                    sh 'npm ci'
+                    sh 'npm run build -- --configuration production'
+                }
             }
-         }
-
+        }
         stage('Docker Build') {
             steps {
                 sh '''
@@ -53,7 +47,6 @@ pipeline {
                 '''
             }
         }
-
         stage('Docker Push') {
             steps {
                 sh '''
@@ -62,7 +55,6 @@ pipeline {
                 '''
             }
         }
-
         stage('Deploy') {
             steps {
                 sh """
@@ -74,7 +66,6 @@ pipeline {
             }
         }
     }
-
     post {
         success { echo 'Build reussi' }
         failure { echo 'Build echoue' }
