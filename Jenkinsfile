@@ -32,7 +32,7 @@ pipeline {
         stage('Build Angular') {
             steps {
                 dir('front/larchitecte-claims') {
-                    sh 'npm ci'
+                    sh 'npm install'
                     sh 'npm run build -- --configuration production'
                 }
             }
