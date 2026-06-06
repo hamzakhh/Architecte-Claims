@@ -36,20 +36,12 @@ pipeline {
         }
 
         stage('Build Angular') {
-            // FIX : agent Docker Linux — évite le bug UNC path de Windows CMD
-            agent {
-                docker {
-                    image 'node:20-alpine'
-                    reuseNode true
-                }
+           steps {
+              bat '''
+                 wsl bash -c "cd /home/hamza/.jenkins/workspace/test/front/larchitecte-claims && npm ci && npm run build -- --configuration production"
+              '''
             }
-            steps {
-                dir('front/larchitecte-claims') {
-                    sh 'npm ci --prefer-offline'
-                    sh 'npm run build -- --configuration production'
-                }
-            }
-        }
+         }
 
         stage('Docker Build') {
             steps {
